@@ -232,7 +232,7 @@ class _PantallaInicioState extends ConsumerState<PantallaInicio> {
               child: _TarjetaGrupo(
                 grupo: g,
                 reunionId: idDeFecha(_dia),
-                total: alumnosDeGrupo(activos, g).length,
+                alumnoIds: {for (final a in alumnosDeGrupo(activos, g)) a.id},
                 esMio: g.consejeroIds.contains(uid),
                 alTocar: () => _abrirLista(periodo, g),
               ),
@@ -287,14 +287,16 @@ class _TarjetaGrupo extends ConsumerWidget {
   const _TarjetaGrupo({
     required this.grupo,
     required this.reunionId,
-    required this.total,
+    required this.alumnoIds,
     required this.esMio,
     required this.alTocar,
   });
 
   final Grupo grupo;
   final String reunionId;
-  final int total;
+
+  /// Muchachos que hoy pertenecen al grupo.
+  final Set<String> alumnoIds;
   final bool esMio;
   final VoidCallback alTocar;
 
@@ -303,7 +305,14 @@ class _TarjetaGrupo extends ConsumerWidget {
     final lista = ref
         .watch(listaProvider((reunionId: reunionId, grupoId: grupo.id)))
         .value;
-    final presentes = lista?.presentes ?? 0;
+    final total = alumnoIds.length;
+    // Solo cuentan los que siguen en el grupo: si un muchacho se graduó
+    // después de pasar lista, su marca no debe inflar la cuenta.
+    final presentes =
+        lista?.registros.entries
+            .where((e) => e.value.presente && alumnoIds.contains(e.key))
+            .length ??
+        0;
     final completo = lista != null && total > 0 && presentes == total;
     return Pulsable(
       alTocar: alTocar,
