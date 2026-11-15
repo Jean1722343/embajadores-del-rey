@@ -60,3 +60,6 @@ lib/firebase_options.dart
 
 # Imágenes originales del escudo, antes de limpiarlas
 assets/emblema_original/
+
+# Video tutorial (archivos grandes)
+video/
