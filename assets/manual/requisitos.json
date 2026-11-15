@@ -1,0 +1,264 @@
+{
+  "fuente": "https://www.embajadoresdelreymex.org/el-manual-y-sus-proyectos",
+  "consultado": "2026-11-14",
+  "grados": {
+    "aspirante": {
+      "url": "https://www.embajadoresdelreymex.org/el-manual-y-sus-proyectos/1-aspirante",
+      "automaticos": [
+        "Asistir a 4 reuniones consecutivas del Capítulo."
+      ],
+      "generales": [
+        "Tener como mínimo 9 años cumplidos.",
+        "Tener máximo 15 años cumplidos.",
+        "Memorizar y explicar el lema de la Orden de los Embajadores del Rey (2 Corintios 5:20).",
+        "Hacer del conocimiento y/o tener la aprobación del Presidente de la Varonil, de la Directora de los Departamentos o de la Presidenta de la Femenil."
+      ],
+      "metas": {}
+    },
+    "miembro": {
+      "url": "https://www.embajadoresdelreymex.org/el-manual-y-sus-proyectos/2-miembro",
+      "automaticos": [
+        "Asistir al 75% de las reuniones del Capítulo, desde la fecha en que se le consideró como Aspirante."
+      ],
+      "generales": [
+        "Memorizar y explicar el Pacto de la Orden de los Embajadores del Rey.",
+        "Conocer e identificar los colores de la Orden de los Embajadores del Rey (Azul Real, Blanco y Oro), explicando su significado.",
+        "Conocer el himno oficial de la Orden, \"En los negocios del Rey\" (Núm. 399 H. B.; Núm. 104 N. H. P.), memorizando como mínimo la primera estrofa y el coro.",
+        "Tener la aprobación del Director de los Departamentos, del Presidente de la Varonil o de la Presidenta de la Femenil."
+      ],
+      "metas": {}
+    },
+    "paje": {
+      "url": "https://www.embajadoresdelreymex.org/el-manual-y-sus-proyectos/3-paje",
+      "automaticos": [
+        "Ser candidato a Paje durante 6 meses, durante los cuales cumplirá las cinco metas para el grado de Paje.",
+        "Asistir al 75% de las reuniones del Capítulo durante el tiempo que es candidato a Paje (Mi Capítulo, inciso C)."
+      ],
+      "generales": [
+        "Una vez cumplidas las cinco metas, ser examinado y aprobado por la comisión revisora, o por la Directora de los Departamentos, y/o la presidencia de la Femenil o Varonil, quienes otorgan el grado de Paje."
+      ],
+      "metas": {
+        "miVida": [
+          "Memorizar y explicar Isaías 53:6 (Todos son pecadores).",
+          "Memorizar y explicar Juan 3:36 (Todos están perdidos sin Cristo).",
+          "Memorizar y explicar Juan 3:16 (El plan de Dios para la salvación de todos).",
+          "Memorizar y explicar Hechos 16:31 (Lo que el pecador debe hacer: tener fe en Cristo).",
+          "Memorizar y explicar Mateo 10:32 y 33 (Declaración a Cristo como su Salvador).",
+          "Memorizar y explicar Juan 14:23 y 24 (Obedecer sus mandamientos).",
+          "Participar en el desarrollo de los programas semanales del Capítulo por lo menos 8 veces durante el tiempo que es candidato a Paje."
+        ],
+        "miHogar": [
+          "Memorizar y explicar Éxodo 20:12.",
+          "Hacer una lista de todos los miembros de su familia (nombres completos, fechas de nacimiento, año escolar que cursan, lugar donde trabajan, si son cristianos o no y a qué iglesia pertenecen), con el propósito de orar por ellos todos los días durante un mes.",
+          "Durante quince días, llevar un registro diario de buenas acciones realizadas, actos de desobediencia para con sus padres y actos de obediencia realizados."
+        ],
+        "miCapitulo": [
+          "Saber la Comisión y Declaración de la Orden.",
+          "Conocer y explicar el significado del Emblema, Insignia o Distintivo de la Orden de los Embajadores del Rey (el escudo, la franja, la corona de oro y la rama de laurel)."
+        ],
+        "miIglesia": [
+          "Memorizar y explicar Lucas 2:49.",
+          "Hacer una lista de los oficiales y directiva de la Sociedad Femenil de su Iglesia, con sus domicilios y teléfonos, con el propósito de orar por ellas durante dos semanas consecutivas; o bien de la Unión Nacional Varonil Bautista Misionera de México.",
+          "Asistir consecutivamente por lo menos a 4 cultos de oración de su Iglesia."
+        ],
+        "miComunidad": [
+          "Hacer una lista con los nombres de los principales miembros del Ayuntamiento de su ciudad, ejemplificando con fotografías de periódicos de la localidad, con el propósito de orar por ellos durante dos semanas consecutivas.",
+          "En un mapa o croquis de su localidad, señalar la ubicación del templo de la Iglesia Bautista a la que asiste, así como las misiones, los centros de predicación, los círculos de la femenil, etc., de su Iglesia."
+        ]
+      }
+    },
+    "escudero": {
+      "url": "https://www.embajadoresdelreymex.org/el-manual-y-sus-proyectos/4-escudero",
+      "automaticos": [
+        "Ser Paje un mínimo de 6 meses, durante los cuales cumplirá las cinco metas del grado de Escudero.",
+        "Asistir al 75% de las reuniones de su Capítulo durante el tiempo que es Paje (Mi Capítulo, inciso C)."
+      ],
+      "generales": [
+        "Una vez cumplidas las cinco metas, ser examinado y aprobado por la comisión revisora, o la Directora de los Departamentos, y/o la Presidente de la Unión Varonil o Femenil, quienes otorgan el grado de Escudero."
+      ],
+      "metas": {
+        "miVida": [
+          "Memorizar y explicar Isaías 55:6 y Romanos 10:13 (Buscar a Dios).",
+          "Memorizar y explicar 1 Juan 1:9 y Romanos 10:9 (Confesar nuestros pecados).",
+          "Memorizar y explicar Isaías 55:7 (Dejar el pecado).",
+          "Memorizar y explicar Juan 5:24 (Aceptar a Cristo).",
+          "Participar en el desarrollo de los temas semanales del Capítulo cuando menos 8 veces durante el tiempo que es Paje."
+        ],
+        "miHogar": [
+          "Memorizar y explicar Efesios 6:1.",
+          "Promover y llevar a cabo en su hogar, por espacio de un mes, lecturas bíblicas de la revista de la escuela dominical con dos o más miembros de su familia.",
+          "Durante dos semanas, llevar un registro diario de las actividades que sus papás le asignan: las realizadas y las no realizadas, explicando por qué no las realizó."
+        ],
+        "miCapitulo": [
+          "Conocer y estudiar la biografía del misionero cuyo nombre lleva el Capítulo.",
+          "Saber la Comisión y Declaración de la Orden (Intermedios)."
+        ],
+        "miIglesia": [
+          "Memorizar y explicar Romanos 12:1.",
+          "Hacer una lista de los oficiales y maestros de la escuela dominical de su Iglesia y orar por ellos durante 2 semanas seguidas.",
+          "Asistir en forma consecutiva a 8 cultos de predicación los domingos por la tarde (solo si en la iglesia a la que asiste se llevan a cabo estas reuniones)."
+        ],
+        "miComunidad": [
+          "Hacer una lista con los nombres de los principales integrantes del ejecutivo de su Estado, ejemplificando con fotos y/o recortes de periódico, con el objeto de orar por ellos por espacio de una semana (opcionalmente, buscar interactuar con las autoridades).",
+          "En un mapa de su entidad federativa, marcar en las diferentes localidades del Estado la ubicación de las Iglesias Bautistas que integran la Asociación, así como las comisiones, centros de predicación, casa-hogar, sanatorios, hospitales, seminarios, etc."
+        ]
+      }
+    },
+    "caballero": {
+      "url": "https://www.embajadoresdelreymex.org/el-manual-y-sus-proyectos/5-caballero",
+      "automaticos": [
+        "Ser Escudero un mínimo de seis meses, durante los cuales cumplirá con las cinco metas para el grado de Caballero."
+      ],
+      "generales": [
+        "Una vez cumplidas las cinco metas, ser examinado y aprobado por la comisión revisora, compuesta por la Directora de los Departamentos y/o la Presidente de la Unión Varonil o Femenil; al aprobar se llama al Promotor Regional de los Embajadores del Rey para la graduación, quien a su vez informa al Promotor Nacional."
+      ],
+      "metas": {
+        "miVida": [
+          "Memorizar y explicar el Salmo 1 (Dos hombres, uno bueno y otro malo).",
+          "Memorizar y explicar Mateo 7:12 (La regla de oro).",
+          "Memorizar y explicar Mateo 16:24 (El lema de los cristianos).",
+          "Memorizar y explicar Salmo 51:10 (La preparación del cristiano).",
+          "Memorizar y explicar Mateo 28:19 y 20 (La comisión de los cristianos).",
+          "Memorizar y explicar Efesios 6:10-17 (La armadura del cristiano).",
+          "Leer un libro misionero de un personaje bíblico, u otro valorado por el Consejero, haciendo un resumen del mismo.",
+          "Tomar parte en el desarrollo de los temas semanales del Capítulo cuando menos 8 veces durante el tiempo que es Escudero."
+        ],
+        "miHogar": [
+          "Memorizar y saber explicar 1 Timoteo 5:8.",
+          "Promover y responsabilizarse de que en su hogar, por espacio de un mes, se cumpla el calendario de oración que aparece en \"La Voz\" (revista de la Unión Nacional Femenil Bautista Misionera de México) con dos o más miembros de su familia.",
+          "Responsabilizarse del aseo de uno de los cuartos de su casa, llevando un registro diario, bajo la dirección y supervisión de la mamá, durante dos semanas consecutivas."
+        ],
+        "miCapitulo": [
+          "Elaborar con madera triplay o tablón (o algo semejante) una espada, decorada con los colores apropiados (ancho sugerido aproximado de 2 cm o 3/4 de pulgada).",
+          "Con sus propios ahorros, adquirir un libro misionero y, después de leerlo, regalarlo a la biblioteca del Capítulo; el título estará de acuerdo con la opinión de su pastor y/o Consejero."
+        ],
+        "miIglesia": [
+          "Memorizar y explicar 1 Pedro 2:9.",
+          "Hacer una lista de los nombres, domicilios, trabajos y profesión de los diáconos de su iglesia para orar por ellos durante un mes.",
+          "Asistir a 4 reuniones de negocios, sea de su Iglesia, de la Femenil, de la Varonil o de la Unión de Jóvenes, haciendo un informe para el Capítulo de cada una.",
+          "Entrevistar a 3 miembros de su iglesia sobre: ¿Qué importancia tiene el diezmo? ¿A quién debe entregarse el diezmo? ¿Desde cuándo es diezmero? ¿Su experiencia como diezmero?; hacer un resumen y presentarlo al Capítulo."
+        ],
+        "miComunidad": [
+          "Leer con detenimiento y poder explicar 1 Timoteo 2:1-3, haciendo una lista de integrantes del gabinete presidencial para orar por ellos.",
+          "En un mapa de la República Mexicana, marcar las entidades federativas que integran las asociaciones Bautistas que hay en el país.",
+          "Conocer los nombres y domicilios de las integrantes de la mesa directiva de la Unión Nacional Femenil Bautista Misionera de México.",
+          "Conocer los nombres y domicilios de la Mesa Directiva de la Unión Nacional Varonil Bautista Misionera de México.",
+          "Obtener las 5 tareas básicas de una Unión Varonil en cada Iglesia."
+        ]
+      }
+    },
+    "embajador": {
+      "url": "https://www.embajadoresdelreymex.org/el-manual-y-sus-proyectos/6-embajador",
+      "automaticos": [
+        "Ser Caballero un mínimo de 6 meses, durante los cuales cumplirá con las metas para el grado de Embajador.",
+        "Asistir al 75% de las reuniones de su Capítulo durante el tiempo que es Caballero (Mi Capítulo, inciso C)."
+      ],
+      "generales": [
+        "Una vez cumplidas las cinco metas, ser examinado y aprobado por la comisión revisora, compuesta por la Directora de los Departamentos y/o la Presidente de la Unión Varonil o Femenil; al aprobar se llama al Promotor Regional de los Embajadores del Rey para la graduación, quien a su vez informa al Promotor Nacional."
+      ],
+      "metas": {
+        "miVida": [
+          "Memorizar y explicar 1 Corintios 3:9 (Trabajadores juntamente con Dios).",
+          "Memorizar y explicar Juan 20:21 (Ir en su nombre).",
+          "Memorizar y explicar Juan 2:5 (Obedecer a Cristo).",
+          "Memorizar y explicar Proverbios 3:9, Levítico 27:30 y 1 Corintios 4:2 (Ser un mayordomo fiel).",
+          "Escoger y estudiar 3 encuentros con varones en la vida del Señor Jesús, de modo que los pueda escribir y explicar con sus propias palabras, mencionando en cuál evangelio, capítulo y versículos se encuentran.",
+          "Escoger, estudiar y contar en sus propias palabras 3 parábolas que enseñó el Señor Jesús, mencionando en cuál evangelio, capítulo y versículos se encuentran y relatando su aplicación práctica.",
+          "Tomar parte en los programas semanales del Capítulo un mínimo de 8 veces mientras es Caballero."
+        ],
+        "miHogar": [
+          "Memorizar y explicar Colosenses 3:20.",
+          "Promover y llevar a cabo cultos con la familia, en su hogar, durante un mes.",
+          "Responsabilizarse durante un mes de juntar la basura diariamente en su hogar, colocándola en el recipiente adecuado y estando al pendiente de que sea recolectada por el Servicio Municipal."
+        ],
+        "miCapitulo": [
+          "Fabricar en madera triplay (u otro material de la región) el escudo de los Embajadores del Rey, decorándolo con los colores oficiales y emblemas de la Orden.",
+          "Preparar a un niño para ser aspirante o bien candidato a la membresía del Capítulo."
+        ],
+        "miIglesia": [
+          "Estudiar las doctrinas bautistas y hacer un resumen para presentarlo ante la Sociedad Femenil y/o Unión de Varones.",
+          "Mediante entrevistas, elaborar una síntesis biográfica del pastor de su iglesia, presentando un informe al Capítulo.",
+          "Estudiar, resumir y exponer en sus propias palabras las ordenanzas que dejó el Señor Jesús y que son distintivas de los bautistas, citando el libro, capítulos y versículos de la Biblia donde se encuentran.",
+          "Investigar con los diáconos, el pastor y/u otros líderes de su congregación las formas mediante las cuales una persona puede convertirse en miembro de una iglesia Bautista, haciendo un breve informe para el Capítulo."
+        ],
+        "miComunidad": [
+          "En un mapa de América, escribir el número de creyentes bautistas que hay en cada país, según estadísticas de la Alianza Bautista Mundial.",
+          "Responsabilizarse de promover y desarrollar en su Capítulo los temas de la semana de oración en pro de las Misiones Mundiales o de la semana de oración de las Misiones en pro de México (según la programación respectiva), recogiendo las ofrendas correspondientes.",
+          "Conocer y saber los nombres y domicilios de los integrantes de la Mesa Directiva de la Convención Nacional Bautista de México, para orar por cada uno de ellos.",
+          "Conocer, saber explicar y dibujar el organigrama actual de la Convención Nacional Bautista de México.",
+          "Participar en el Día Mundial de la Oración y Testimonio Cristiano de los Hombres Bautistas (según se tenga programado)."
+        ]
+      }
+    },
+    "embajadorEnServicio": {
+      "url": "https://www.embajadoresdelreymex.org/el-manual-y-sus-proyectos/7-embajador-en-servicio",
+      "automaticos": [
+        "Ser Embajador durante cuatro meses (mínimo), durante los cuales cumplirá con los requisitos para el grado de Embajador en Servicio."
+      ],
+      "generales": [
+        "Haber alcanzado el grado de Embajador.",
+        "Aprender de memoria y dar el significado de Génesis 12:1-3 (Una promesa misionera).",
+        "Aprender de memoria y dar el significado de Miqueas 4:1-3 (Una profecía misionera).",
+        "Aprender de memoria y dar el significado del Salmo 96 (Un salmo misionero).",
+        "Memorizar los 66 libros de la Biblia: Antiguo Testamento (Ley, Historia, Poesía, Profetas Mayores y Menores) y Nuevo Testamento (Evangelios, Historia, Cartas de Pablo, Cartas Generales y Profecía).",
+        "Completar 3 de los siguientes 5 requisitos: (1) leer un libro misionero de la lista de sugeridos y aprobados, y anotar en un cuaderno un resumen de lo más interesante; (2) desarrollar un tema acerca de la obra que realiza el Hospital Bautista México-Americano (Colomos 2110, Guadalajara, Jal.), procurando consultar la revista \"La Luz Bautista\" de junio de 1973; (3) de acuerdo con el Consejero y la Directora de los Departamentos de la Unión Femenil, preparar todo lo necesario (mapas, banderas, objetos típicos, trajes regionales, etc.) para la presentación de un estudio misionero, ya sea de un libro o acerca de la obra bautista en algún país; (4) fabricar una banderola con los materiales apropiados, donde se muestre el emblema de la Orden, el nombre del Capítulo y la iglesia Bautista a la que pertenece; (5) en un mapa de la República Mexicana con división política, marcar la ubicación de la totalidad de las iglesias Bautistas que forman la Convención Nacional Bautista de México, así como las instituciones: casas-hogar, seminarios, hospitales, librerías, Hogar Galaad, etc.",
+        "Una vez cumplidos los requisitos, ser examinado y aprobado por la comisión revisora, compuesta por la Directora de los Departamentos y/o la Presidente de la Unión Varonil o Femenil; al aprobar se llama al Promotor Regional de los Embajadores del Rey para la graduación, quien a su vez informa al Promotor Nacional."
+      ],
+      "metas": {}
+    },
+    "embajadorExtraordinario": {
+      "url": "https://www.embajadoresdelreymex.org/el-manual-y-sus-proyectos/8-embajador-extraordinario",
+      "automaticos": [],
+      "generales": [
+        "Tener 13 años o más.",
+        "Haber alcanzado el grado de Embajador en Servicio.",
+        "Escoger 10 proyectos especiales (de la lista de proyectos para los grados avanzados), notificando al Promotor Nacional de los Embajadores del Rey.",
+        "Leer dos libros misioneros aprobados por el Promotor Nacional de los Embajadores del Rey.",
+        "Que el Promotor Nacional de los Embajadores del Rey examine y apruebe los proyectos seleccionados."
+      ],
+      "metas": {}
+    },
+    "embajadorPlenipotenciario": {
+      "url": "https://www.embajadoresdelreymex.org/el-manual-y-sus-proyectos/9-embajador-plenipotenciario",
+      "automaticos": [],
+      "generales": [
+        "Tener 13 años o más.",
+        "Haber alcanzado el grado de Embajador Extraordinario.",
+        "Escoger 8 proyectos especiales (de la lista de proyectos para los grados avanzados), informando al Promotor Nacional de los Embajadores del Rey.",
+        "Que el Promotor Nacional de los Embajadores del Rey haya aprobado los 8 proyectos escogidos.",
+        "En caso de que el muchacho ya haya cumplido los 16 años, solo el Promotor Nacional de los Embajadores del Rey está facultado para dispensar este requisito."
+      ],
+      "metas": {}
+    }
+  },
+  "proyectosGradosAvanzados": {
+    "nota": "Catálogo de 25 proyectos que aparece idéntico en las páginas de Embajador Extraordinario (escoger 10) y Embajador Plenipotenciario (escoger 8). No son requisitos obligatorios uno por uno.",
+    "proyectos": [
+      "Investigar la historia de su propia Iglesia: (a) cuándo se estableció, por qué se escogió ese lugar y quién fue el primer pastor; (b) cuándo se organizaron la Escuela Bíblica Dominical, la Unión de Jóvenes, la Sociedad Femenil, la Sociedad Varonil y el Capítulo de los Embajadores del Rey; (c) aumento o pérdida de miembros y contribuciones a las causas misioneras, locales y otras; (d) historia del templo.",
+      "Escoger 10 anuncios o artículos (periódico, revista, internet) donde las tendencias, modas, estilos de vida o acciones estén en contra de lo que establece la Biblia.",
+      "Hacer un mapa de la República Mexicana con división política donde se ubique la obra de la Convención: campos misioneros, iglesias, misiones, escuelas, hospitales, clínicas bautistas, librerías, y dónde faltan misioneros y pastores.",
+      "Hacer y exhibir viviendas en miniatura, construidas por el muchacho, típicas de 5 diferentes naciones o pueblos del mundo (de ser posible, utilizar los mismos materiales).",
+      "Construir y exhibir 4 vehículos que representen diferentes formas de viajar en sendos países (misma regla que el proyecto anterior).",
+      "Utilizando los diferentes medios de comunicación (radio, internet, etc.), establecer contacto con personas cristianas de diferentes partes del mundo y compartir experiencias cristianas del camino del Señor.",
+      "Coleccionar y exhibir fotografías de 7 países donde haya obra bautista, utilizando el traductor de internet.",
+      "Hacer un cuadro en que se comparen la población, el número de cristianos, de iglesias, de misioneros y de pastores en cada entidad del país.",
+      "Hacer un mapa de los viajes misioneros de Pablo, en cartulina o madera, de cuando menos 60 x 80 cm, utilizando diferentes signos para marcar los viajes.",
+      "Escribir un boceto biográfico del misionero cuyo nombre lleva el Capítulo.",
+      "Hacer un mapa de las peregrinaciones de Jesús en Palestina, desde su nacimiento hasta su ascensión (requisitos iguales a los del mapa de los viajes de Pablo).",
+      "Hacer una presentación a los miembros de la Orden de los Embajadores acerca de la obra misionera que realiza la Convención Nacional en México y el mundo.",
+      "Recortar, coleccionar y arreglar de un periódico, revista o internet, todos los días durante una semana, artículos sobre sucesos mundiales que puedan influir en la obra misionera.",
+      "Buscar 20 versículos en el Antiguo Testamento que anticipen la difusión del evangelio por todo el mundo.",
+      "Leer, además de los libros misioneros requeridos para su grado, otros tres libros misioneros aprobados por el Promotor Nacional de los Embajadores del Rey.",
+      "Escribir un artículo o una poesía para publicarse en las revistas denominacionales \"La Voz\" y \"La Luz Bautista\".",
+      "Tener contacto con otros Capítulos de Embajadores del Rey en tres países, mostrar un video de esa comunicación (videochat, Skype, etc.) y presentar un informe al Capítulo.",
+      "De su propia investigación, poder explicar y demostrar 3 juegos, cada uno procedente de un país distinto.",
+      "Ayudar a organizar una Escuela Bíblica Dominical en algún barrio o pueblo donde no haya, y trabajar en ella por lo menos 6 meses.",
+      "Ayudar a una Escuela Bíblica de Vacaciones produciendo trabajos manuales y recreación.",
+      "Ayudar a organizar un Capítulo de los Embajadores del Rey (en otra Iglesia, Misión o en la misma Iglesia), reuniéndose con ellos hasta que ya estén funcionando bien (por lo menos 6 meses).",
+      "Visitar 2 de los campos misioneros de la convención regional y presentar un informe a su Capítulo.",
+      "Entrevistar personalmente a 3 misioneros y presentar un informe a su Capítulo.",
+      "Planear y presentar ante un grupo de varones de su Iglesia una demostración del trabajo de los Embajadores del Rey.",
+      "Leer un ejemplar de \"La Luz Bautista\" y uno de \"La Voz\" y presentar al Capítulo un informe de los artículos de interés."
+    ]
+  }
+}
