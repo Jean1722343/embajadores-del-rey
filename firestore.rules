@@ -1,0 +1,186 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function autenticado() {
+      return request.auth != null;
+    }
+
+    function esSuperAdmin() {
+      return autenticado()
+        && exists(/databases/$(database)/documents/usuarios/$(request.auth.uid))
+        && get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.get('superAdmin', false) == true;
+    }
+
+    function rutaMiembro(capId) {
+      return /databases/$(database)/documents/capitulos/$(capId)/miembros/$(request.auth.uid);
+    }
+
+    function capituloActivo(capId) {
+      return get(/databases/$(database)/documents/capitulos/$(capId)).data.get('suspendido', false) == false;
+    }
+
+    function esMiembro(capId) {
+      return autenticado()
+        && exists(rutaMiembro(capId))
+        && get(rutaMiembro(capId)).data.activo == true
+        && capituloActivo(capId);
+    }
+
+    function esLider(capId) {
+      return esMiembro(capId) && get(rutaMiembro(capId)).data.rol == 'lider';
+    }
+
+    // Perfil de cada usuario. Nadie puede darse a sí mismo el permiso de super administrador.
+    match /usuarios/{uid} {
+      allow read: if autenticado() && (request.auth.uid == uid || esSuperAdmin());
+      allow create: if autenticado() && request.auth.uid == uid
+        && request.resource.data.get('superAdmin', false) == false;
+      allow update: if autenticado() && request.auth.uid == uid
+        && request.resource.data.get('superAdmin', false) == resource.data.get('superAdmin', false);
+      allow delete: if false;
+    }
+
+    // Códigos de invitación: se consultan por código exacto, nunca se listan.
+    match /invitaciones/{codigo} {
+      allow get: if autenticado();
+      // Cualquier miembro invita consejeros; solo un líder invita líderes.
+      allow list: if esMiembro(resource.data.capituloId);
+      allow create: if esMiembro(request.resource.data.capituloId)
+        && (request.resource.data.rol == 'consejero'
+            || (request.resource.data.rol == 'lider'
+                && esLider(request.resource.data.capituloId)))
+        && request.resource.data.activa == true
+        && request.resource.data.expiraEn is timestamp;
+      // Anular: cualquier miembro, sin cambiar de capítulo ni de rol.
+      allow update: if esMiembro(resource.data.capituloId)
+        && request.resource.data.capituloId == resource.data.capituloId
+        && request.resource.data.rol == resource.data.rol;
+      allow delete: if esLider(resource.data.capituloId);
+    }
+
+    match /capitulos/{capId} {
+      allow get: if esMiembro(capId) || esSuperAdmin()
+        || (autenticado() && resource.data.creadoPor == request.auth.uid);
+      allow list: if esSuperAdmin();
+
+      // Registro libre: cualquier usuario crea su capítulo y queda como creador.
+      allow create: if autenticado()
+        && request.resource.data.creadoPor == request.auth.uid
+        && request.resource.data.get('suspendido', false) == false
+        && request.resource.data.nombre is string
+        && request.resource.data.nombre.size() > 0
+        && request.resource.data.nombre.size() <= 80;
+
+      // El líder edita los datos; solo el super administrador suspende.
+      allow update: if (esLider(capId)
+          && request.resource.data.creadoPor == resource.data.creadoPor
+          && request.resource.data.get('suspendido', false) == resource.data.get('suspendido', false))
+        || (esSuperAdmin()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['suspendido']));
+      allow delete: if false;
+
+      match /miembros/{uid} {
+        allow read: if esMiembro(capId) || (autenticado() && request.auth.uid == uid);
+
+        allow create: if autenticado() && request.auth.uid == uid && (
+          // El creador del capítulo se registra como primer líder.
+          // getAfter: el capítulo y este documento se crean en la misma operación.
+          (getAfter(/databases/$(database)/documents/capitulos/$(capId)).data.creadoPor == request.auth.uid
+            && request.resource.data.rol == 'lider'
+            && request.resource.data.activo == true)
+          ||
+          // Cualquier otro entra con un código vigente de este capítulo y con el rol del código.
+          (request.resource.data.codigoUsado is string
+            && exists(/databases/$(database)/documents/invitaciones/$(request.resource.data.codigoUsado))
+            && get(/databases/$(database)/documents/invitaciones/$(request.resource.data.codigoUsado)).data.capituloId == capId
+            && get(/databases/$(database)/documents/invitaciones/$(request.resource.data.codigoUsado)).data.activa == true
+            && get(/databases/$(database)/documents/invitaciones/$(request.resource.data.codigoUsado)).data.expiraEn > request.time
+            && get(/databases/$(database)/documents/invitaciones/$(request.resource.data.codigoUsado)).data.rol == request.resource.data.rol
+            && request.resource.data.activo == true
+            && capituloActivo(capId))
+        );
+
+        // El líder cambia rol o da de baja; cada quien solo puede corregir su nombre.
+        allow update: if esLider(capId)
+          || (esMiembro(capId) && request.auth.uid == uid
+              && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nombre', 'fotoUrl']));
+        allow delete: if esLider(capId);
+      }
+
+      // Consejeros y líder administran por igual; borrar es solo del líder.
+      match /periodos/{id} {
+        allow read, create, update: if esMiembro(capId);
+        allow delete: if esLider(capId);
+      }
+
+      match /grupos/{id} {
+        allow read, create, update: if esMiembro(capId);
+        allow delete: if esLider(capId);
+      }
+
+      match /alumnos/{alumnoId} {
+        allow read, create, update: if esMiembro(capId);
+        allow delete: if esLider(capId);
+
+        match /avances/{grado} {
+          allow read, create, update: if esMiembro(capId);
+          allow delete: if esLider(capId);
+        }
+      }
+
+      match /reuniones/{id} {
+        allow read, create, update: if esMiembro(capId);
+        allow delete: if esLider(capId);
+      }
+
+      // Cualquier consejero del capítulo puede tomar la lista de cualquier grupo
+      // (para cubrir a un compañero); queda guardado quién la tomó.
+      match /listas/{id} {
+        allow read: if esMiembro(capId);
+        allow create, update: if esMiembro(capId)
+          && request.resource.data.tomadaPor == request.auth.uid;
+        allow delete: if esLider(capId);
+      }
+
+      // Foto en tamaño completo de cada evidencia (mismo id).
+      match /fotos/{id} {
+        allow read: if esMiembro(capId);
+        allow create: if esMiembro(capId)
+          && request.resource.data.subidaPor == request.auth.uid
+          && request.resource.data.bytes is bytes
+          && request.resource.data.bytes.size() < 900 * 1024;
+        allow update: if false;
+        allow delete: if esLider(capId)
+          || (esMiembro(capId) && resource.data.subidaPor == request.auth.uid);
+      }
+
+      // Caja: cualquier miembro registra entradas y salidas a su nombre;
+      // no se editan, y solo el líder las borra.
+      match /movimientos/{id} {
+        allow read: if esMiembro(capId);
+        allow create: if esMiembro(capId)
+          && request.resource.data.registradoPor == request.auth.uid
+          && request.resource.data.tipo in ['ingreso', 'egreso']
+          && request.resource.data.monto is number
+          && request.resource.data.monto > 0
+          && request.resource.data.concepto is string
+          && request.resource.data.concepto.size() > 0;
+        allow update: if false;
+        allow delete: if esLider(capId);
+      }
+
+      match /evidencias/{id} {
+        allow read: if esMiembro(capId);
+        allow create: if esMiembro(capId)
+          && request.resource.data.subidaPor == request.auth.uid;
+        allow update: if esMiembro(capId)
+          && resource.data.subidaPor == request.auth.uid
+          && request.resource.data.subidaPor == resource.data.subidaPor;
+        allow delete: if esLider(capId)
+          || (esMiembro(capId) && resource.data.subidaPor == request.auth.uid);
+      }
+    }
+  }
+}

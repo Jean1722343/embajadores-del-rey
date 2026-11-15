@@ -1,0 +1,36 @@
+{
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "emulators": {
+    "auth": {
+      "port": 9099
+    },
+    "firestore": {
+      "port": 8080
+    },
+    "ui": {
+      "enabled": false
+    },
+    "singleProjectMode": true
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "embajadores-rey-lista",
+          "appId": "1:525190731061:android:b7954a95e72c4b724ea87c",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "embajadores-rey-lista",
+          "configurations": {
+            "android": "1:525190731061:android:b7954a95e72c4b724ea87c"
+          }
+        }
+      }
+    }
+  }
+}
