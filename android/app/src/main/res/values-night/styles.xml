@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Tema de la ventana mientras arranca el proceso. -->
+    <style name="LaunchTheme" parent="@android:style/Theme.Light.NoTitleBar">
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowBackground">@drawable/launch_background</item>
+    </style>
+    <!-- Tema de la ventana detrás de la interfaz de Flutter. -->
+    <style name="NormalTheme" parent="@android:style/Theme.Light.NoTitleBar">
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowBackground">@color/arranque_fondo</item>
+    </style>
+</resources>

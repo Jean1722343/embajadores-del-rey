@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Arranque: fondo azul profundo con el escudo al centro, igual que el
+     primer cuadro de la pantalla de carga de Flutter. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@color/arranque_fondo" />
+    <item android:width="138dp" android:height="172dp" android:gravity="center">
+        <bitmap android:gravity="fill" android:src="@drawable/arranque_escudo_plano" />
+    </item>
+</layer-list>

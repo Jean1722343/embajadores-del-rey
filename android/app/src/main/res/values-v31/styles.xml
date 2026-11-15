@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Android 12 o superior: pantalla de arranque del sistema. -->
+    <style name="LaunchTheme" parent="@android:style/Theme.Light.NoTitleBar">
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowSplashScreenBackground">@color/arranque_fondo</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/arranque_escudo</item>
+        <item name="android:windowBackground">@color/arranque_fondo</item>
+    </style>
+    <style name="NormalTheme" parent="@android:style/Theme.Light.NoTitleBar">
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowBackground">@color/arranque_fondo</item>
+    </style>
+</resources>
