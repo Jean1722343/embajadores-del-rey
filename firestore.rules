@@ -185,9 +185,14 @@ service cloud.firestore {
         allow read: if esMiembro(capId);
         allow create: if esMiembro(capId)
           && request.resource.data.subidaPor == request.auth.uid;
-        allow update: if esMiembro(capId)
-          && resource.data.subidaPor == request.auth.uid
-          && request.resource.data.subidaPor == resource.data.subidaPor;
+        // Quien la subió o el líder corrigen la fecha de la actividad y la
+        // descripción; nada más cambia.
+        allow update: if (esLider(capId)
+            || (esMiembro(capId) && resource.data.subidaPor == request.auth.uid))
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reunionId', 'descripcion'])
+          && request.resource.data.reunionId is string
+          && request.resource.data.get('descripcion', '') is string
+          && request.resource.data.get('descripcion', '').size() <= 300;
         allow delete: if esLider(capId)
           || (esMiembro(capId) && resource.data.subidaPor == request.auth.uid);
       }

@@ -125,6 +125,11 @@ abstract final class PhosphorIconsBold {
     fontFamily: 'PhosphorBold',
     matchTextDirection: true,
   );
+  static const clockCounterClockwise = IconData(
+    0xe1a0,
+    fontFamily: 'PhosphorBold',
+    matchTextDirection: true,
+  );
   static const cloudSlash = IconData(
     0xe1b6,
     fontFamily: 'PhosphorBold',
@@ -431,6 +436,11 @@ abstract final class PhosphorIconsFill {
   );
   static const wallet = IconData(
     0xe68a,
+    fontFamily: 'PhosphorFill',
+    matchTextDirection: true,
+  );
+  static const xCircle = IconData(
+    0xe4f8,
     fontFamily: 'PhosphorFill',
     matchTextDirection: true,
   );

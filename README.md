@@ -24,10 +24,11 @@ Esta app nació para resolver eso en mi capítulo, y está hecha para que cualqu
 | **Grupos por periodo** | Los grupos juntan uno o varios grados y se rearman cada semestre. Cualquier consejero puede cubrir el grupo de otro; queda registrado quién pasó la lista. |
 | **Avance de grado** | Asistencia, tiempo en el grado y las cinco metas, con los requisitos del manual para marcar uno por uno. La meta se firma cuando están completos. |
 | **Muchachos** | Datos de cada uno: grado, fecha de nacimiento, papás o tutores con teléfono, domicilio, notas y foto. Llamada, WhatsApp y mapa desde su perfil. |
-| **Caja** | Saldo del capítulo: ofrendas de las listas, entradas (con cómo se consiguió) y salidas (con para qué). Reporte en PDF y Excel. |
-| **Fotos** | Evidencias de cada reunión, tomadas desde la app. Las de actividades pasadas se guardan con su fecha. |
+| **Caja** | Saldo del capítulo: ofrendas de las listas, entradas (con cómo se consiguió) y salidas (con para qué). Reporte en PDF, hecho de tablas con el saldo corrido, y en Excel. |
+| **Fotos** | Evidencias de cada reunión, tomadas desde la app. Las de actividades pasadas se guardan con su fecha, y la fecha y la descripción se pueden corregir después. |
 | **Cumpleaños** | El teléfono de cada consejero avisa el día que un muchacho cumple años, y el inicio muestra los de las próximas dos semanas. |
 | **Mi perfil** | Cada consejero pone su nombre y su foto, que ve el resto del equipo. |
+| **Historial** | Cada día en que se pasó lista: cuántos fueron, y al abrirlo, quién asistió y quién faltó en cada grupo. |
 | **Reportes** | Porcentaje por muchacho y por grupo, alerta de faltas seguidas, PDF y Excel. |
 | **Biblioteca** | Lo esencial de la Orden y los requisitos de los nueve grados dentro de la app; cuadernillos y manual como descargas opcionales desde su enlace oficial. |
 | **Tutorial** | La primera vez, tres pasos en los que se practica con la app. |

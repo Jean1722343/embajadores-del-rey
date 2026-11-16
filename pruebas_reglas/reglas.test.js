@@ -317,13 +317,26 @@ test('solo el líder borra el capítulo entero, con sus miembros y códigos', as
   await assertSucceeds(getDoc(doc(db('liderB'), 'capitulos/B')));
 });
 
-test('quien subió una foto puede cambiarle el día de la actividad', async () => {
-  const ev = { reunionId: '2027-01-09', subidaPor: 'consejeroA' };
-  await assertSucceeds(setDoc(doc(db('consejeroA'), 'capitulos/A/evidencias/e1'), ev));
-  await assertSucceeds(
-    updateDoc(doc(db('consejeroA'), 'capitulos/A/evidencias/e1'), { reunionId: '2026-12-05' }),
-  );
-  await assertFails(
-    updateDoc(doc(db('liderA'), 'capitulos/A/evidencias/e1'), { reunionId: '2026-11-01' }),
-  );
+test('quien subió una foto, o el líder, le corrige la fecha y la descripción, y nada más', async () => {
+  const ev = { reunionId: '2027-01-09', descripcion: '', subidaPor: 'liderA' };
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'capitulos/A/evidencias/e2'), ev);
+    await setDoc(doc(ctx.firestore(), 'capitulos/A/evidencias/e1'), {
+      ...ev, subidaPor: 'consejeroA',
+    });
+  });
+  const c = doc(db('consejeroA'), 'capitulos/A/evidencias/e1');
+  await assertSucceeds(updateDoc(c, { reunionId: '2026-12-05', descripcion: 'Campamento' }));
+  await assertSucceeds(updateDoc(doc(db('liderA'), 'capitulos/A/evidencias/e1'), {
+    descripcion: 'Campamento de invierno',
+  }));
+  // Un consejero no edita la foto de otro.
+  await assertFails(updateDoc(doc(db('consejeroA'), 'capitulos/A/evidencias/e2'), {
+    descripcion: 'x',
+  }));
+  // Ni se cambia quién la subió, ni entra una descripción enorme, ni alguien de fuera.
+  await assertFails(updateDoc(c, { subidaPor: 'liderA' }));
+  await assertFails(updateDoc(c, { subidaPorNombre: 'Otro' }));
+  await assertFails(updateDoc(c, { descripcion: 'x'.repeat(301) }));
+  await assertFails(updateDoc(doc(db('liderB'), 'capitulos/A/evidencias/e1'), { descripcion: 'x' }));
 });

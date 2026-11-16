@@ -158,6 +158,12 @@ class _PantallaInicioState extends ConsumerState<PantallaInicio> {
               ],
             ),
           ),
+          // Se ve siempre, haya o no periodo activo.
+          if (ref.watch(actualizacionProvider).value case final nueva?)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+              child: _AvisoActualizacion(nueva),
+            ),
           Expanded(
             child: !periodosListos
                 ? const Cargando()
@@ -208,16 +214,10 @@ class _PantallaInicioState extends ConsumerState<PantallaInicio> {
           );
 
     final cumples = proximosCumples(activos, DateTime.now());
-    final nueva = ref.watch(actualizacionProvider).value;
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
       children: [
-        if (nueva != null)
-          Padding(
-            padding: const EdgeInsets.only(top: 16),
-            child: _AvisoActualizacion(nueva),
-          ),
         const TituloSeccion('Pasar lista'),
         if (grupos.isEmpty)
           Card(

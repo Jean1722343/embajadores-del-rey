@@ -293,9 +293,9 @@ const _gris = PdfColor.fromInt(0xFF51597A);
 const _nube = PdfColor.fromInt(0xFFEDF0F7);
 const _filete = PdfColor.fromInt(0xFFD3D9E8);
 
-/// Reporte de caja: encabezado con el escudo, resumen con el saldo
-/// destacado y el libro de movimientos con entradas en verde y salidas
-/// en rojo.
+/// Reporte de caja hecho solo de tablas: resumen, ofrendas por reunión,
+/// otros ingresos, salidas y el libro completo con el saldo corrido.
+/// Entradas en verde y salidas en rojo.
 Future<Uint8List> generarCajaPdf(
   EstadoCaja caja,
   String capitulo, {
@@ -303,46 +303,142 @@ Future<Uint8List> generarCajaPdf(
   DateTime? generado,
 }) async {
   final hoy = generado ?? DateTime.now();
-  final normal = pw.TextStyle(font: recursos.texto, fontSize: 10);
-  final negrita = pw.TextStyle(font: recursos.negrita, fontSize: 10);
+  final normal = pw.TextStyle(font: recursos.texto, fontSize: 9.5);
+  final negrita = pw.TextStyle(font: recursos.negrita, fontSize: 9.5);
+  final cabecera = negrita.copyWith(color: PdfColors.white, fontSize: 9);
   pw.TextStyle grande(double t, PdfColor color) =>
       pw.TextStyle(font: recursos.titulos, fontSize: t, color: color);
 
-  // Tarjeta de un total del resumen.
-  pw.Widget total(
-    String etiqueta,
-    double monto,
-    PdfColor color,
-    String signo,
-  ) => pw.Expanded(
-    child: pw.Container(
-      padding: const pw.EdgeInsets.all(12),
-      decoration: pw.BoxDecoration(
-        border: pw.Border.all(color: _filete, width: 1),
-        borderRadius: pw.BorderRadius.circular(8),
-      ),
-      child: pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          pw.Text(etiqueta, style: normal.copyWith(color: _gris)),
-          pw.SizedBox(height: 3),
-          pw.Text('$signo${_pesos.format(monto)}', style: grande(17, color)),
-        ],
-      ),
-    ),
+  const borde = pw.BorderSide(color: _filete, width: 0.7);
+  const rejilla = pw.TableBorder(
+    top: borde,
+    bottom: borde,
+    left: borde,
+    right: borde,
+    horizontalInside: borde,
+    verticalInside: borde,
   );
 
-  pw.Widget celda(
-    String texto, {
-    pw.TextStyle? estilo,
-    pw.Alignment alineacion = pw.Alignment.centerLeft,
-  }) => pw.Container(
-    alignment: alineacion,
-    padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-    child: pw.Text(texto, style: estilo ?? normal),
-  );
+  pw.Widget celda(String texto, {pw.TextStyle? estilo, bool derecha = false}) =>
+      pw.Container(
+        alignment: derecha ? pw.Alignment.centerRight : pw.Alignment.centerLeft,
+        padding: const pw.EdgeInsets.symmetric(horizontal: 7, vertical: 5),
+        child: pw.Text(texto, style: estilo ?? normal),
+      );
+
+  String entrada(double m) => '+ ${_pesos.format(m)}';
+  String salida(double m) => '- ${_pesos.format(m)}';
+  final verde = negrita.copyWith(color: _verde);
+  final rojo = negrita.copyWith(color: _rojo);
+
+  /// Una tabla con su título, encabezado que se repite en cada página,
+  /// filas alternadas y, si se da, una fila final de total.
+  /// [columnas]: (título, ancho, alineada a la derecha).
+  List<pw.Widget> tabla(
+    String titulo,
+    List<(String, pw.TableColumnWidth, bool)> columnas,
+    List<List<pw.Widget>> filas, {
+    List<pw.Widget>? total,
+    String vacia = 'Sin movimientos',
+  }) => [
+    pw.SizedBox(height: 14),
+    pw.Text(titulo, style: grande(12.5, _marino)),
+    pw.SizedBox(height: 5),
+    pw.Table(
+      border: rejilla,
+      columnWidths: {for (final (i, c) in columnas.indexed) i: c.$2},
+      children: [
+        pw.TableRow(
+          repeat: true,
+          decoration: const pw.BoxDecoration(color: _marino),
+          children: [
+            for (final c in columnas)
+              celda(c.$1, estilo: cabecera, derecha: c.$3),
+          ],
+        ),
+        if (filas.isEmpty)
+          pw.TableRow(
+            children: [
+              celda(vacia, estilo: normal.copyWith(color: _gris)),
+              for (var i = 1; i < columnas.length; i++) celda(''),
+            ],
+          ),
+        for (final (i, f) in filas.indexed)
+          pw.TableRow(
+            decoration: pw.BoxDecoration(
+              color: i.isOdd ? _nube : PdfColors.white,
+            ),
+            children: f,
+          ),
+        if (total != null)
+          pw.TableRow(
+            decoration: const pw.BoxDecoration(
+              color: PdfColor.fromInt(0xFFE2E7F3),
+            ),
+            children: total,
+          ),
+      ],
+    ),
+  ];
 
   final entradas = caja.ofrendas + caja.ingresos;
+  // Del más antiguo al más reciente, como se lleva un libro.
+  final cronologico = caja.asientos.reversed.toList();
+  List<Asiento> deTipo(TipoAsiento t) =>
+      cronologico.where((a) => a.tipo == t).toList();
+  final ofrendas = deTipo(TipoAsiento.ofrenda);
+  final ingresos = deTipo(TipoAsiento.ingreso);
+  final egresos = deTipo(TipoAsiento.egreso);
+
+  const fecha = pw.FixedColumnWidth(72);
+  const monto = pw.FixedColumnWidth(82);
+
+  // Tabla de entradas o salidas registradas a mano.
+  List<pw.Widget> tablaMovimientos(
+    String titulo,
+    List<Asiento> asientos,
+    double suma, {
+    required bool entra,
+    required String vacia,
+  }) => tabla(
+    titulo,
+    [
+      ('Fecha', fecha, false),
+      (
+        entra ? 'Cómo se consiguió' : 'Para qué fue',
+        const pw.FlexColumnWidth(3),
+        false,
+      ),
+      ('Registró', const pw.FlexColumnWidth(1.7), false),
+      ('Monto', monto, true),
+    ],
+    [
+      for (final a in asientos)
+        [
+          celda(_f.format(a.fecha)),
+          celda(a.concepto),
+          celda(a.quien),
+          celda(
+            entra ? entrada(a.monto) : salida(a.monto),
+            estilo: entra ? verde : rojo,
+            derecha: true,
+          ),
+        ],
+    ],
+    total: [
+      celda(''),
+      celda('Total', estilo: negrita),
+      celda(''),
+      celda(
+        entra ? entrada(suma) : salida(suma),
+        estilo: entra ? verde : rojo,
+        derecha: true,
+      ),
+    ],
+    vacia: vacia,
+  );
+
+  var corrido = 0.0;
   final doc = pw.Document(title: 'Reporte de caja - $capitulo');
   doc.addPage(
     pw.MultiPage(
@@ -362,204 +458,203 @@ Future<Uint8List> generarCajaPdf(
         ],
       ),
       build: (c) => [
-        // Encabezado: bloque azul marino con el escudo y filete de oro.
+        // Membrete: el escudo, el título y la fecha, sobre un filete de oro.
         pw.Container(
-          padding: const pw.EdgeInsets.all(16),
+          padding: const pw.EdgeInsets.only(bottom: 10),
           decoration: const pw.BoxDecoration(
-            color: _marino,
-            border: pw.Border(bottom: pw.BorderSide(color: _oro, width: 4)),
+            border: pw.Border(bottom: pw.BorderSide(color: _oro, width: 3)),
           ),
           child: pw.Row(
+            crossAxisAlignment: pw.CrossAxisAlignment.center,
             children: [
-              pw.Container(
-                width: 46,
-                height: 46,
-                padding: const pw.EdgeInsets.all(5),
-                decoration: const pw.BoxDecoration(
-                  color: PdfColors.white,
-                  shape: pw.BoxShape.circle,
-                ),
+              pw.SizedBox(
+                width: 44,
+                height: 44,
                 child: pw.Image(recursos.escudo),
               ),
-              pw.SizedBox(width: 14),
+              pw.SizedBox(width: 12),
               pw.Expanded(
                 child: pw.Column(
                   crossAxisAlignment: pw.CrossAxisAlignment.start,
                   children: [
-                    pw.Text(
-                      'Reporte de caja',
-                      style: grande(22, PdfColors.white),
-                    ),
+                    pw.Text('Reporte de caja', style: grande(21, _marino)),
                     pw.Text(
                       'Embajadores del Rey · Capítulo $capitulo',
-                      style: normal.copyWith(
-                        color: const PdfColor.fromInt(0xFFCBD3EA),
-                      ),
+                      style: normal.copyWith(color: _gris),
                     ),
                   ],
                 ),
               ),
-              pw.Text(
-                _f.format(hoy),
-                style: negrita.copyWith(color: PdfColors.white),
-              ),
-            ],
-          ),
-        ),
-        pw.SizedBox(height: 16),
-        // Resumen: tres totales y el saldo, que es lo que más pesa.
-        pw.Row(
-          children: [
-            total('Ofrendas de los muchachos', caja.ofrendas, _verde, '+ '),
-            pw.SizedBox(width: 8),
-            total('Otros ingresos', caja.ingresos, _verde, '+ '),
-            pw.SizedBox(width: 8),
-            total('Salidas', caja.egresos, _rojo, '- '),
-          ],
-        ),
-        pw.SizedBox(height: 8),
-        pw.Container(
-          padding: const pw.EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-          decoration: pw.BoxDecoration(
-            color: _marino,
-            borderRadius: pw.BorderRadius.circular(8),
-            border: pw.Border.all(color: _oro, width: 2.5),
-          ),
-          child: pw.Row(
-            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-            children: [
               pw.Column(
-                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                crossAxisAlignment: pw.CrossAxisAlignment.end,
                 children: [
-                  pw.Text('SALDO EN CAJA', style: grande(13, _oro)),
                   pw.Text(
-                    'Entradas ${_pesos.format(entradas)} menos salidas '
-                    '${_pesos.format(caja.egresos)}',
-                    style: normal.copyWith(
-                      color: const PdfColor.fromInt(0xFFCBD3EA),
-                    ),
+                    'Fecha del reporte',
+                    style: normal.copyWith(fontSize: 8.5, color: _gris),
                   ),
+                  pw.Text(_f.format(hoy), style: negrita),
                 ],
               ),
-              pw.Text(
-                _pesos.format(caja.saldo),
-                style: grande(30, PdfColors.white),
-              ),
             ],
           ),
         ),
-        pw.SizedBox(height: 18),
-        pw.Text('Movimientos', style: grande(14, _marino)),
-        pw.SizedBox(height: 6),
+
+        // 1. Resumen: de dónde salió el dinero, en qué se fue y qué queda.
+        ...tabla(
+          'Resumen',
+          [
+            ('Concepto', const pw.FlexColumnWidth(3), false),
+            ('Movimientos', const pw.FixedColumnWidth(82), true),
+            ('Monto', const pw.FixedColumnWidth(110), true),
+          ],
+          [
+            [
+              celda('Ofrendas de los muchachos'),
+              celda('${ofrendas.length}', derecha: true),
+              celda(entrada(caja.ofrendas), estilo: verde, derecha: true),
+            ],
+            [
+              celda('Otros ingresos'),
+              celda('${ingresos.length}', derecha: true),
+              celda(entrada(caja.ingresos), estilo: verde, derecha: true),
+            ],
+            [
+              celda('Total de entradas', estilo: negrita),
+              celda('${ofrendas.length + ingresos.length}', derecha: true),
+              celda(entrada(entradas), estilo: verde, derecha: true),
+            ],
+            [
+              celda('Total de salidas', estilo: negrita),
+              celda('${egresos.length}', derecha: true),
+              celda(salida(caja.egresos), estilo: rojo, derecha: true),
+            ],
+          ],
+        ),
+        // El saldo cierra el resumen como una fila más, la que más pesa.
         pw.Table(
-          columnWidths: const {
-            0: pw.FixedColumnWidth(80),
-            1: pw.FlexColumnWidth(3),
-            2: pw.FlexColumnWidth(1.6),
-            3: pw.FixedColumnWidth(78),
-            4: pw.FixedColumnWidth(78),
-          },
           border: const pw.TableBorder(
-            horizontalInside: pw.BorderSide(color: _filete, width: 0.5),
-            bottom: pw.BorderSide(color: _filete, width: 0.5),
+            bottom: pw.BorderSide(color: _oro, width: 3),
           ),
+          columnWidths: const {
+            0: pw.FlexColumnWidth(3),
+            1: pw.FixedColumnWidth(192),
+          },
           children: [
-            // El encabezado se repite en cada página.
             pw.TableRow(
-              repeat: true,
               decoration: const pw.BoxDecoration(color: _marino),
               children: [
-                for (final (titulo, derecha) in const [
-                  ('Fecha', false),
-                  ('Concepto', false),
-                  ('Registró', false),
-                  ('Entrada', true),
-                  ('Salida', true),
-                ])
-                  celda(
-                    titulo,
-                    estilo: negrita.copyWith(color: PdfColors.white),
-                    alineacion: derecha
-                        ? pw.Alignment.centerRight
-                        : pw.Alignment.centerLeft,
+                pw.Container(
+                  padding: const pw.EdgeInsets.symmetric(
+                    horizontal: 7,
+                    vertical: 9,
                   ),
-              ],
-            ),
-            for (final (i, a) in caja.asientos.indexed)
-              pw.TableRow(
-                decoration: pw.BoxDecoration(
-                  color: i.isOdd ? _nube : PdfColors.white,
+                  child: pw.Text(
+                    'SALDO EN CAJA',
+                    style: grande(12.5, PdfColors.white),
+                  ),
                 ),
-                children: [
-                  celda(_f.format(a.fecha)),
-                  pw.Container(
-                    padding: const pw.EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 6,
-                    ),
-                    child: pw.Column(
-                      crossAxisAlignment: pw.CrossAxisAlignment.start,
-                      children: [
-                        pw.Text(a.concepto, style: negrita),
-                        pw.Text(
-                          _tipo(a),
-                          style: normal.copyWith(fontSize: 8, color: _gris),
-                        ),
-                      ],
-                    ),
+                pw.Container(
+                  alignment: pw.Alignment.centerRight,
+                  padding: const pw.EdgeInsets.symmetric(
+                    horizontal: 7,
+                    vertical: 7,
                   ),
-                  celda(a.quien, estilo: normal.copyWith(color: _gris)),
-                  celda(
-                    a.entra ? '+ ${_pesos.format(a.monto)}' : '',
-                    estilo: negrita.copyWith(color: _verde),
-                    alineacion: pw.Alignment.centerRight,
+                  child: pw.Text(
+                    _pesos.format(caja.saldo),
+                    style: grande(17, _oro),
                   ),
-                  celda(
-                    a.entra ? '' : '- ${_pesos.format(a.monto)}',
-                    estilo: negrita.copyWith(color: _rojo),
-                    alineacion: pw.Alignment.centerRight,
-                  ),
-                ],
-              ),
-            // Totales del libro.
-            pw.TableRow(
-              decoration: const pw.BoxDecoration(
-                border: pw.Border(
-                  top: pw.BorderSide(color: _marino, width: 1.5),
-                ),
-              ),
-              children: [
-                celda(''),
-                celda('Totales', estilo: negrita),
-                celda(''),
-                celda(
-                  '+ ${_pesos.format(entradas)}',
-                  estilo: negrita.copyWith(color: _verde),
-                  alineacion: pw.Alignment.centerRight,
-                ),
-                celda(
-                  '- ${_pesos.format(caja.egresos)}',
-                  estilo: negrita.copyWith(color: _rojo),
-                  alineacion: pw.Alignment.centerRight,
                 ),
               ],
             ),
           ],
         ),
-        pw.SizedBox(height: 10),
-        pw.Align(
-          alignment: pw.Alignment.centerRight,
-          child: pw.Container(
-            padding: const pw.EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            decoration: pw.BoxDecoration(
-              color: _oro,
-              borderRadius: pw.BorderRadius.circular(6),
-            ),
-            child: pw.Text(
-              'Saldo en caja: ${_pesos.format(caja.saldo)}',
-              style: grande(14, _marino),
-            ),
-          ),
+
+        // 2. Ofrendas, un renglón por día de reunión.
+        ...tabla(
+          'Ofrendas por reunión',
+          [
+            ('Fecha', fecha, false),
+            ('Reunión', const pw.FlexColumnWidth(3), false),
+            ('Listas', const pw.FixedColumnWidth(60), true),
+            ('Monto', monto, true),
+          ],
+          [
+            for (final a in ofrendas)
+              [
+                celda(_f.format(a.fecha)),
+                celda(a.concepto),
+                celda('${a.listas.length}', derecha: true),
+                celda(entrada(a.monto), estilo: verde, derecha: true),
+              ],
+          ],
+          total: [
+            celda(''),
+            celda('Total', estilo: negrita),
+            celda(''),
+            celda(entrada(caja.ofrendas), estilo: verde, derecha: true),
+          ],
+          vacia: 'Sin ofrendas registradas',
+        ),
+
+        // 3 y 4. Lo que se registró a mano.
+        ...tablaMovimientos(
+          'Otros ingresos',
+          ingresos,
+          caja.ingresos,
+          entra: true,
+          vacia: 'Sin otros ingresos',
+        ),
+        ...tablaMovimientos(
+          'Salidas',
+          egresos,
+          caja.egresos,
+          entra: false,
+          vacia: 'Sin salidas',
+        ),
+
+        // 5. El libro: todo junto, en orden, con el saldo después de cada
+        // movimiento.
+        ...tabla(
+          'Libro de movimientos',
+          [
+            ('Fecha', fecha, false),
+            ('Concepto', const pw.FlexColumnWidth(3), false),
+            ('Tipo', const pw.FixedColumnWidth(52), false),
+            ('Entrada', const pw.FixedColumnWidth(74), true),
+            ('Salida', const pw.FixedColumnWidth(74), true),
+            ('Saldo', const pw.FixedColumnWidth(78), true),
+          ],
+          [
+            for (final a in cronologico)
+              [
+                celda(_f.format(a.fecha)),
+                celda(a.concepto),
+                celda(_tipo(a), estilo: normal.copyWith(color: _gris)),
+                celda(
+                  a.entra ? entrada(a.monto) : '',
+                  estilo: verde,
+                  derecha: true,
+                ),
+                celda(
+                  a.entra ? '' : salida(a.monto),
+                  estilo: rojo,
+                  derecha: true,
+                ),
+                celda(
+                  _pesos.format(corrido += a.conSigno),
+                  estilo: negrita,
+                  derecha: true,
+                ),
+              ],
+          ],
+          total: [
+            celda(''),
+            celda('Totales', estilo: negrita),
+            celda(''),
+            celda(entrada(entradas), estilo: verde, derecha: true),
+            celda(salida(caja.egresos), estilo: rojo, derecha: true),
+            celda(_pesos.format(caja.saldo), estilo: negrita, derecha: true),
+          ],
         ),
       ],
     ),

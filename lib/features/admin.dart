@@ -13,6 +13,7 @@ import '../services/actualizacion.dart';
 import '../services/proveedores.dart';
 import '../widgets/comunes.dart';
 import 'biblioteca.dart';
+import 'historial.dart';
 import 'perfil.dart';
 import 'reportes.dart';
 import 'sin_capitulo.dart';
@@ -103,6 +104,12 @@ class PantallaAdmin extends ConsumerWidget {
                     'Biblioteca',
                     'La Orden, los grados y material para descargar',
                     () => abrir(context, const PantallaBiblioteca()),
+                  ),
+                  _Opcion(
+                    PhosphorIconsBold.clockCounterClockwise,
+                    'Historial de listas',
+                    'Cada día de reunión: quién fue y quién faltó',
+                    () => abrir(context, const PantallaHistorial()),
                   ),
                   _Opcion(
                     PhosphorIconsBold.chartBar,

@@ -259,6 +259,84 @@ class _VisorEvidencia extends ConsumerWidget {
 
   final Evidencia evidencia;
 
+  /// Corrige cuándo fue la actividad y qué se hizo.
+  Future<void> _editar(BuildContext context, WidgetRef ref) async {
+    final descripcion = TextEditingController(text: evidencia.descripcion);
+    var dia = evidencia.dia;
+    final guardar = await showDialog<bool>(
+      context: context,
+      builder: (c) => StatefulBuilder(
+        builder: (c, actualizar) => AlertDialog(
+          title: const Text('Editar foto'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: () async {
+                    final elegido = await elegirDiaDeActividad(c, dia);
+                    if (elegido != null) actualizar(() => dia = elegido);
+                  },
+                  child: InputDecorator(
+                    decoration: const InputDecoration(
+                      labelText: '¿Cuándo fue?',
+                      suffixIcon: Icon(PhosphorIconsBold.calendar),
+                    ),
+                    child: Text(
+                      fechaLargaConAnio(dia),
+                      style: const TextStyle(
+                        color: Colores.tinta,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: descripcion,
+                  textCapitalization: TextCapitalization.sentences,
+                  maxLength: 140,
+                  maxLines: null,
+                  decoration: const InputDecoration(
+                    labelText: '¿Qué se hizo? (opcional)',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(c, false),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(minimumSize: const Size(110, 46)),
+              onPressed: () => Navigator.pop(c, true),
+              child: const Text('Guardar'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (guardar != true || !context.mounted) return;
+    final ok = await intentar(
+      context,
+      () => ref
+          .read(repoProvider)
+          .editarEvidencia(
+            ref.read(capIdProvider)!,
+            evidencia.id,
+            dia: dia,
+            descripcion: descripcion.text,
+          ),
+    );
+    if (ok && context.mounted) {
+      avisar(context, 'Foto actualizada.');
+      Navigator.pop(context);
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final uid = ref.watch(sesionProvider).value?.uid;
@@ -272,29 +350,12 @@ class _VisorEvidencia extends ConsumerWidget {
         backgroundColor: Colors.black,
         title: Text(fechaCorta(evidencia.dia)),
         actions: [
-          // Solo quien la subió le corrige el día (así lo permite la regla).
-          if (evidencia.subidaPor == uid)
+          // Quien la subió o el líder corrigen la fecha y la descripción.
+          if (puedeBorrar)
             IconButton(
-              tooltip: 'Cambiar la fecha',
-              icon: const Icon(PhosphorIconsBold.calendar),
-              onPressed: () async {
-                final dia = await elegirDiaDeActividad(context, evidencia.dia);
-                if (dia == null || !context.mounted) return;
-                final ok = await intentar(
-                  context,
-                  () => ref
-                      .read(repoProvider)
-                      .cambiarDiaEvidencia(
-                        ref.read(capIdProvider)!,
-                        evidencia.id,
-                        dia,
-                      ),
-                );
-                if (ok && context.mounted) {
-                  avisar(context, 'Fecha cambiada a ${fechaCorta(dia)}.');
-                  Navigator.pop(context);
-                }
-              },
+              tooltip: 'Editar fecha y descripción',
+              icon: const Icon(PhosphorIconsBold.pencilSimple),
+              onPressed: () => _editar(context, ref),
             ),
           if (puedeBorrar)
             IconButton(

@@ -333,6 +333,12 @@ class Repo {
                   ..sort((a, b) => a.nombre.compareTo(b.nombre)),
           );
 
+  /// Los grupos de todos los periodos, para nombrar listas antiguas.
+  Stream<List<Grupo>> todosLosGrupos(String capId) => _sub(
+    capId,
+    'grupos',
+  ).snapshots().map((s) => s.docs.map(Grupo.desde).toList());
+
   Future<void> guardarGrupo(String capId, Grupo g) {
     final col = _sub(capId, 'grupos');
     return (g.id.isEmpty ? col.doc() : col.doc(g.id)).set(g.aMapa());
@@ -552,9 +558,16 @@ class Repo {
     return b is Blob ? b.bytes : null;
   }
 
-  /// Cambia el día de la actividad de una foto ya subida.
-  Future<void> cambiarDiaEvidencia(String capId, String id, DateTime dia) =>
-      _sub(capId, 'evidencias').doc(id).update({'reunionId': idDeFecha(dia)});
+  /// Corrige el día de la actividad y la descripción de una foto ya subida.
+  Future<void> editarEvidencia(
+    String capId,
+    String id, {
+    required DateTime dia,
+    required String descripcion,
+  }) => _sub(capId, 'evidencias').doc(id).update({
+    'reunionId': idDeFecha(dia),
+    'descripcion': descripcion.trim(),
+  });
 
   Future<void> borrarEvidencia(String capId, Evidencia e) =>
       (_db.batch()

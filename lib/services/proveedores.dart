@@ -96,6 +96,13 @@ final gruposProvider = StreamProvider<List<Grupo>>((ref) {
   return ref.watch(repoProvider).grupos(capId, periodo.id);
 });
 
+/// Grupos de todos los periodos (el historial muestra listas antiguas).
+final todosLosGruposProvider = StreamProvider<List<Grupo>>((ref) {
+  final capId = ref.watch(capIdProvider);
+  if (capId == null) return Stream.value(const []);
+  return ref.watch(repoProvider).todosLosGrupos(capId);
+});
+
 final alumnosProvider = StreamProvider<List<Alumno>>((ref) {
   final capId = ref.watch(capIdProvider);
   if (capId == null) return Stream.value(const []);
