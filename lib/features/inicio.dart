@@ -3,9 +3,13 @@ import 'package:material_ui/material_ui.dart';
 
 import '../core/iconos.dart';
 
+import 'package:url_launcher/url_launcher.dart';
+
 import '../core/asistencia.dart';
+import '../core/cumpleanos.dart';
 import '../core/tema.dart';
 import '../models/modelos.dart';
+import '../services/actualizacion.dart';
 import '../services/proveedores.dart';
 import '../services/repo.dart';
 import '../widgets/comunes.dart';
@@ -203,9 +207,17 @@ class _PantallaInicioState extends ConsumerState<PantallaInicio> {
             ),
           );
 
+    final cumples = proximosCumples(activos, DateTime.now());
+    final nueva = ref.watch(actualizacionProvider).value;
+
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
       children: [
+        if (nueva != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 16),
+            child: _AvisoActualizacion(nueva),
+          ),
         const TituloSeccion('Pasar lista'),
         if (grupos.isEmpty)
           Card(
@@ -252,6 +264,48 @@ class _PantallaInicioState extends ConsumerState<PantallaInicio> {
               ),
             ),
           ),
+        if (cumples.isNotEmpty) ...[
+          const TituloSeccion('Cumpleaños'),
+          Card(
+            clipBehavior: Clip.antiAlias,
+            child: Column(
+              children: [
+                for (final c in cumples)
+                  ListTile(
+                    tileColor: c.esHoy
+                        ? Colores.oro.withValues(alpha: .18)
+                        : null,
+                    leading: FotoAlumno(
+                      c.alumno,
+                      heroe: 'cumple-${c.alumno.id}',
+                    ),
+                    title: Text(
+                      c.alumno.nombre,
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    subtitle: Text(
+                      c.esHoy
+                          ? '¡Hoy cumple ${c.edad} años!'
+                          : c.faltan == 1
+                          ? 'Mañana cumple ${c.edad} años'
+                          : '${fechaLarga(c.fecha)} · cumple ${c.edad}',
+                    ),
+                    trailing: Icon(
+                      c.esHoy ? PhosphorIconsFill.cake : PhosphorIconsBold.cake,
+                      color: c.esHoy ? Colores.azul : Colores.textoApagado,
+                    ),
+                    onTap: () => abrir(
+                      context,
+                      PantallaPerfilAlumno(
+                        c.alumno.id,
+                        heroe: 'cumple-${c.alumno.id}',
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
         if (enAlerta.isNotEmpty) ...[
           const TituloSeccion('Faltas seguidas'),
           Card(
@@ -281,6 +335,54 @@ class _PantallaInicioState extends ConsumerState<PantallaInicio> {
       ],
     );
   }
+}
+
+/// Aviso de que hay una versión más nueva de la app, con el botón para
+/// descargarla. Al abrir el archivo descargado, Android la instala encima
+/// de la actual sin perder la sesión ni los datos.
+class _AvisoActualizacion extends StatelessWidget {
+  const _AvisoActualizacion(this.nueva);
+
+  final Actualizacion nueva;
+
+  @override
+  Widget build(BuildContext context) => Card(
+    color: Colores.oro.withValues(alpha: .2),
+    child: Padding(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              const Icon(PhosphorIconsBold.arrowCircleUp, color: Colores.azul),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Hay una versión nueva (${nueva.version})',
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Descárgala y ábrela para instalarla encima de esta. No se '
+            'pierde nada: tu sesión y los datos se quedan.',
+          ),
+          const SizedBox(height: 12),
+          FilledButton.icon(
+            onPressed: () => launchUrl(
+              Uri.parse(nueva.url),
+              mode: LaunchMode.externalApplication,
+            ),
+            icon: const Icon(PhosphorIconsBold.downloadSimple),
+            label: const Text('Actualizar'),
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 class _TarjetaGrupo extends ConsumerWidget {

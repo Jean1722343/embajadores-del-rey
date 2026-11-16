@@ -46,7 +46,9 @@ Future<File?> elegirFoto(BuildContext context) async {
   return foto == null ? null : File(foto.path);
 }
 
-/// Toma una foto, pide una descripción y la guarda como evidencia.
+/// Toma una foto, pide la fecha de la actividad y una descripción, y la
+/// guarda como evidencia. [reunionId] es la fecha que se propone (aaaa-mm-dd);
+/// se puede cambiar por la de una actividad pasada.
 Future<void> agregarEvidencia(
   BuildContext context,
   WidgetRef ref, {
@@ -57,44 +59,71 @@ Future<void> agregarEvidencia(
   if (archivo == null || !context.mounted) return;
 
   final descripcion = TextEditingController();
+  var dia = DateTime.tryParse(reunionId) ?? DateTime.now();
   final guardar = await showDialog<bool>(
     context: context,
-    builder: (c) => AlertDialog(
-      title: const Text('Evidencia'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(14),
-            child: Image.file(
-              archivo,
-              height: 180,
-              width: double.infinity,
-              fit: BoxFit.cover,
-            ),
+    builder: (c) => StatefulBuilder(
+      builder: (c, actualizar) => AlertDialog(
+        title: const Text('Evidencia'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(14),
+                child: Image.file(
+                  archivo,
+                  height: 180,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                ),
+              ),
+              const SizedBox(height: 12),
+              // Una foto de una actividad pasada se guarda con su fecha.
+              InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: () async {
+                  final elegido = await elegirDiaDeActividad(c, dia);
+                  if (elegido != null) actualizar(() => dia = elegido);
+                },
+                child: InputDecorator(
+                  decoration: const InputDecoration(
+                    labelText: '¿Cuándo fue?',
+                    suffixIcon: Icon(PhosphorIconsBold.calendar),
+                  ),
+                  child: Text(
+                    fechaLargaConAnio(dia),
+                    style: const TextStyle(
+                      color: Colores.tinta,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: descripcion,
+                textCapitalization: TextCapitalization.sentences,
+                maxLength: 140,
+                decoration: const InputDecoration(
+                  labelText: '¿Qué se hizo? (opcional)',
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: descripcion,
-            textCapitalization: TextCapitalization.sentences,
-            maxLength: 140,
-            decoration: const InputDecoration(
-              labelText: '¿Qué se hizo? (opcional)',
-            ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(c, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(minimumSize: const Size(110, 46)),
+            onPressed: () => Navigator.pop(c, true),
+            child: const Text('Guardar'),
           ),
         ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(c, false),
-          child: const Text('Cancelar'),
-        ),
-        FilledButton(
-          style: FilledButton.styleFrom(minimumSize: const Size(110, 46)),
-          onPressed: () => Navigator.pop(c, true),
-          child: const Text('Guardar'),
-        ),
-      ],
     ),
   );
   if (guardar != true || !context.mounted) return;
@@ -105,7 +134,7 @@ Future<void> agregarEvidencia(
         .read(repoProvider)
         .guardarEvidencia(
           capId: ref.read(capIdProvider)!,
-          reunionId: reunionId,
+          reunionId: idDeFecha(dia),
           grupoId: grupoId,
           foto: foto,
           descripcion: descripcion.text,
@@ -115,7 +144,22 @@ Future<void> agregarEvidencia(
   if (ok && context.mounted) avisar(context, 'Foto guardada.');
 }
 
-/// Galería de evidencias del capítulo, agrupada por reunión.
+/// Calendario para elegir el día de una actividad: hoy o una fecha pasada.
+Future<DateTime?> elegirDiaDeActividad(BuildContext context, DateTime inicial) {
+  final hoy = DateTime.now();
+  final primero = DateTime(hoy.year - 10);
+  return showDatePicker(
+    context: context,
+    initialDate: inicial.isAfter(hoy) || inicial.isBefore(primero)
+        ? hoy
+        : inicial,
+    firstDate: primero,
+    lastDate: hoy,
+    helpText: 'Fecha de la actividad',
+  );
+}
+
+/// Galería de evidencias del capítulo, agrupada por el día de la actividad.
 class PantallaEvidencias extends ConsumerWidget {
   const PantallaEvidencias({super.key});
 
@@ -131,7 +175,7 @@ class PantallaEvidencias extends ConsumerWidget {
           reunionId: idDeFecha(DateTime.now()),
         ),
         icon: const Icon(PhosphorIconsBold.cameraPlus),
-        label: const Text('Foto de hoy'),
+        label: const Text('Agregar foto'),
       ),
       body: evidencias.when(
         loading: () => const Cargando(),
@@ -145,7 +189,8 @@ class PantallaEvidencias extends ConsumerWidget {
               icono: PhosphorIconsBold.images,
               texto:
                   'Aquí aparecerán las fotos de los que llegaron y de las '
-                  'actividades de cada reunión.',
+                  'actividades de cada reunión. También puedes subir fotos '
+                  'de actividades pasadas y ponerles su fecha.',
             );
           }
           // El id de la reunión es su fecha (aaaa-mm-dd).
@@ -159,7 +204,7 @@ class PantallaEvidencias extends ConsumerWidget {
             children: [
               for (final dia in dias) ...[
                 TituloSeccion(
-                  fechaLarga(DateTime.tryParse(dia) ?? DateTime.now()),
+                  fechaLargaConAnio(DateTime.tryParse(dia) ?? DateTime.now()),
                 ),
                 GridView.count(
                   crossAxisCount: 3,
@@ -225,8 +270,32 @@ class _VisorEvidencia extends ConsumerWidget {
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
-        title: Text(fechaCorta(evidencia.fecha)),
+        title: Text(fechaCorta(evidencia.dia)),
         actions: [
+          // Solo quien la subió le corrige el día (así lo permite la regla).
+          if (evidencia.subidaPor == uid)
+            IconButton(
+              tooltip: 'Cambiar la fecha',
+              icon: const Icon(PhosphorIconsBold.calendar),
+              onPressed: () async {
+                final dia = await elegirDiaDeActividad(context, evidencia.dia);
+                if (dia == null || !context.mounted) return;
+                final ok = await intentar(
+                  context,
+                  () => ref
+                      .read(repoProvider)
+                      .cambiarDiaEvidencia(
+                        ref.read(capIdProvider)!,
+                        evidencia.id,
+                        dia,
+                      ),
+                );
+                if (ok && context.mounted) {
+                  avisar(context, 'Fecha cambiada a ${fechaCorta(dia)}.');
+                  Navigator.pop(context);
+                }
+              },
+            ),
           if (puedeBorrar)
             IconButton(
               tooltip: 'Borrar foto',

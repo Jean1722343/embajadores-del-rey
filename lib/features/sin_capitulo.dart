@@ -116,6 +116,18 @@ class PantallaSinAcceso extends ConsumerWidget {
               onPressed: () => abrir(context, const PantallaCrearCapitulo()),
               child: const Text('Crear un capítulo'),
             ),
+            // El capítulo se borró o ya no se es parte: se quita de la
+            // lista para que la app abra el siguiente, si hay.
+            if (ref.watch(capIdProvider) != null)
+              TextButton(
+                onPressed: () => intentar(
+                  context,
+                  () => ref
+                      .read(repoProvider)
+                      .olvidarCapitulo(ref.read(capIdProvider)!),
+                ),
+                child: const Text('Quitar este capítulo de mi lista'),
+              ),
             TextButton(
               onPressed: () => ref.read(repoProvider).salir(),
               child: const Text('Cerrar sesión'),

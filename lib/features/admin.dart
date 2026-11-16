@@ -9,9 +9,11 @@ import 'package:url_launcher/url_launcher.dart';
 import '../core/grados.dart';
 import '../core/tema.dart';
 import '../models/modelos.dart';
+import '../services/actualizacion.dart';
 import '../services/proveedores.dart';
 import '../widgets/comunes.dart';
 import 'biblioteca.dart';
+import 'perfil.dart';
 import 'reportes.dart';
 import 'sin_capitulo.dart';
 import 'tutorial.dart';
@@ -26,6 +28,10 @@ class PantallaAdmin extends ConsumerWidget {
     final yo = ref.watch(yoProvider).value;
     final perfil = ref.watch(perfilProvider).value;
     final esLider = yo?.esLider ?? false;
+    final miembros = ref.watch(miembrosProvider).value ?? const <Miembro>[];
+    final otrosLideres = miembros
+        .where((m) => m.esLider && m.activo && m.uid != yo?.uid)
+        .length;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Capítulo')),
@@ -57,16 +63,33 @@ class PantallaAdmin extends ConsumerWidget {
                             capitulo?.ciudad ?? '',
                           ].where((s) => s.isNotEmpty).join(' · '),
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '${yo?.nombre ?? ''} · ${yo?.rol.nombre ?? ''}',
-                          style: const TextStyle(fontWeight: FontWeight.w600),
-                        ),
                       ],
                     ),
                   ),
                 ],
               ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          // El perfil del usuario: su nombre y su foto.
+          Card(
+            child: ListTile(
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 6,
+              ),
+              leading: FotoPersona(
+                yo?.nombre ?? '',
+                yo?.foto ?? perfil?.foto,
+                radio: 24,
+              ),
+              title: Text(
+                yo?.nombre ?? '',
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
+              subtitle: Text('${yo?.rol.nombre ?? ''} · Mi perfil'),
+              trailing: const Icon(PhosphorIconsBold.pencilSimple),
+              onTap: () => abrir(context, const PantallaMiPerfil()),
             ),
           ),
           const SizedBox(height: 12),
@@ -155,6 +178,24 @@ class PantallaAdmin extends ConsumerWidget {
                     () => _empezarDeNuevo(context, ref, capitulo?.nombre ?? ''),
                   ),
                 _Opcion(
+                  PhosphorIconsBold.doorOpen,
+                  'Abandonar este capítulo',
+                  'Dejas de ser parte de ${capitulo?.nombre ?? 'él'}',
+                  () => _abandonar(
+                    context,
+                    ref,
+                    capitulo?.nombre ?? '',
+                    unicoLider: esLider && otrosLideres == 0,
+                  ),
+                ),
+                if (esLider)
+                  _Opcion(
+                    PhosphorIconsBold.trash,
+                    'Borrar el capítulo',
+                    'Lo elimina por completo, para todos',
+                    () => _borrarCapitulo(context, ref, capitulo?.nombre ?? ''),
+                  ),
+                _Opcion(
                   PhosphorIconsBold.signOut,
                   'Cerrar sesión',
                   null,
@@ -170,32 +211,32 @@ class PantallaAdmin extends ConsumerWidget {
     );
   }
 
-  /// Borra todo el contenido del capítulo. Pide escribir el nombre del
-  /// capítulo para que no ocurra por un toque equivocado.
-  Future<void> _empezarDeNuevo(
-    BuildContext context,
-    WidgetRef ref,
-    String nombre,
-  ) async {
+  /// Pide escribir el nombre del capítulo para que un borrado no ocurra por
+  /// un toque equivocado. Devuelve si se confirmó.
+  Future<bool> _confirmarEscribiendo(
+    BuildContext context, {
+    required String titulo,
+    required String texto,
+    required String nombre,
+    required String aceptar,
+  }) async {
     final escrito = TextEditingController();
     final si = await showDialog<bool>(
       context: context,
       builder: (c) => AlertDialog(
-        title: const Text('Empezar de nuevo'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Se borran para todos los muchachos, las listas, las fotos, '
-              'la caja, los grupos y los periodos. Se conservan el capítulo y sus '
-              'consejeros. No se puede deshacer.',
-            ),
-            const SizedBox(height: 14),
-            Text('Para confirmar, escribe: $nombre'),
-            const SizedBox(height: 8),
-            TextField(controller: escrito, autofocus: true),
-          ],
+        title: Text(titulo),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(texto),
+              const SizedBox(height: 14),
+              Text('Para confirmar, escribe: $nombre'),
+              const SizedBox(height: 8),
+              TextField(controller: escrito, autofocus: true),
+            ],
+          ),
         ),
         actions: [
           TextButton(
@@ -208,18 +249,36 @@ class PantallaAdmin extends ConsumerWidget {
               c,
               escrito.text.trim().toLowerCase() == nombre.trim().toLowerCase(),
             ),
-            child: const Text('Borrar todo'),
+            child: Text(aceptar),
           ),
         ],
       ),
     );
-    if (!context.mounted) return;
-    if (si != true) {
+    if (si != true && context.mounted) {
       if (si == false && escrito.text.isNotEmpty) {
         avisar(context, 'El nombre no coincide; no se borró nada.');
       }
-      return;
     }
+    return si == true;
+  }
+
+  /// Borra todo el contenido del capítulo, pero conserva el capítulo.
+  Future<void> _empezarDeNuevo(
+    BuildContext context,
+    WidgetRef ref,
+    String nombre,
+  ) async {
+    final si = await _confirmarEscribiendo(
+      context,
+      titulo: 'Empezar de nuevo',
+      texto:
+          'Se borran para todos los muchachos, las listas, las fotos, '
+          'la caja, los grupos y los periodos. Se conservan el capítulo y sus '
+          'consejeros. No se puede deshacer.',
+      nombre: nombre,
+      aceptar: 'Borrar todo',
+    );
+    if (!si || !context.mounted) return;
     avisar(context, 'Borrando…');
     final ok = await intentar(
       context,
@@ -227,6 +286,86 @@ class PantallaAdmin extends ConsumerWidget {
     );
     if (ok && context.mounted) {
       avisar(context, 'Capítulo en blanco. ¡A empezar!');
+    }
+  }
+
+  /// Elimina el capítulo completo, con sus consejeros. Solo el líder.
+  Future<void> _borrarCapitulo(
+    BuildContext context,
+    WidgetRef ref,
+    String nombre,
+  ) async {
+    final si = await _confirmarEscribiendo(
+      context,
+      titulo: 'Borrar el capítulo',
+      texto:
+          'Se elimina el capítulo completo: los muchachos, las listas, las '
+          'fotos, la caja, los grupos, los periodos y el acceso de todos los '
+          'consejeros. Nadie podrá volver a abrirlo. No se puede deshacer.',
+      nombre: nombre,
+      aceptar: 'Borrar el capítulo',
+    );
+    if (!si || !context.mounted) return;
+    avisar(context, 'Borrando el capítulo…');
+    final mensajes = ScaffoldMessenger.of(context);
+    final ok = await intentar(
+      context,
+      () => ref.read(repoProvider).borrarCapitulo(ref.read(capIdProvider)!),
+    );
+    if (ok) {
+      mensajes
+        ..hideCurrentSnackBar()
+        ..showSnackBar(const SnackBar(content: Text('Capítulo borrado.')));
+    }
+  }
+
+  /// El usuario se sale del capítulo. El único líder no puede: dejaría al
+  /// capítulo sin nadie que lo administre.
+  Future<void> _abandonar(
+    BuildContext context,
+    WidgetRef ref,
+    String nombre, {
+    required bool unicoLider,
+  }) async {
+    if (unicoLider) {
+      await showDialog<void>(
+        context: context,
+        builder: (c) => AlertDialog(
+          title: const Text('Eres el único líder'),
+          content: const Text(
+            'Si te vas, el capítulo se queda sin líder. Antes nombra líder a '
+            'otro consejero (en Consejeros, con el menú de su nombre) o, si '
+            'ya nadie lo va a usar, borra el capítulo.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(c),
+              child: const Text('Entendido'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+    final si = await confirmar(
+      context,
+      titulo: 'Abandonar $nombre',
+      texto:
+          'Dejarás de ver a sus muchachos, listas, fotos y caja. Lo que ya '
+          'registraste se queda en el capítulo. Para volver necesitarás un '
+          'código de invitación nuevo.',
+      aceptar: 'Abandonar',
+    );
+    if (!si || !context.mounted) return;
+    final mensajes = ScaffoldMessenger.of(context);
+    final ok = await intentar(
+      context,
+      () => ref.read(repoProvider).abandonarCapitulo(ref.read(capIdProvider)!),
+    );
+    if (ok) {
+      mensajes
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text('Saliste de $nombre.')));
     }
   }
 
@@ -830,16 +969,12 @@ class PantallaConsejeros extends ConsumerWidget {
               children: [
                 for (final m in miembros)
                   ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: Colores.nube,
-                      child: Icon(
-                        m.esLider
-                            ? PhosphorIconsFill.shieldChevron
-                            : PhosphorIconsFill.user,
-                        color: Colores.acento,
-                      ),
-                    ),
+                    leading: FotoPersona(m.nombre, m.foto),
                     title: Text(m.nombre + (m.uid == uid ? ' (tú)' : '')),
+                    // Cada quien edita su propio perfil desde aquí.
+                    onTap: m.uid == uid
+                        ? () => abrir(context, const PantallaMiPerfil())
+                        : null,
                     subtitle: Text(
                       m.activo ? m.rol.nombre : '${m.rol.nombre} · sin acceso',
                     ),
@@ -957,14 +1092,14 @@ class PantallaSuperAdmin extends ConsumerWidget {
 }
 
 /// Créditos de la app.
-class Creditos extends StatelessWidget {
+class Creditos extends ConsumerWidget {
   const Creditos({super.key});
 
   /// Perfil de LinkedIn del autor. Se abre en el navegador o en la app de LinkedIn.
   static const linkedin = 'https://www.linkedin.com/in/jeanpaulgc';
 
   @override
-  Widget build(BuildContext context) => Column(
+  Widget build(BuildContext context, WidgetRef ref) => Column(
     children: [
       const Text(
         'Hecho por',
@@ -986,6 +1121,14 @@ class Creditos extends StatelessWidget {
         'Para los capítulos de Embajadores del Rey',
         style: TextStyle(fontSize: 12.5, color: Colores.textoSuave),
       ),
+      if (ref.watch(versionInstaladaProvider).value case final version?)
+        Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: Text(
+            'Versión $version',
+            style: const TextStyle(fontSize: 12, color: Colores.textoSuave),
+          ),
+        ),
     ],
   );
 }

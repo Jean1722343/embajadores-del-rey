@@ -61,12 +61,16 @@ class Miembro {
     required this.nombre,
     required this.rol,
     required this.activo,
+    this.foto,
   });
 
   final String uid;
   final String nombre;
   final Rol rol;
   final bool activo;
+
+  /// Foto de perfil pequeña que el propio consejero eligió.
+  final Uint8List? foto;
 
   bool get esLider => rol == Rol.lider;
 
@@ -77,6 +81,7 @@ class Miembro {
       nombre: m['nombre'] ?? '',
       rol: Rol.desdeId(m['rol']),
       activo: m['activo'] == true,
+      foto: _bytes(m['foto']),
     );
   }
 }
@@ -421,7 +426,13 @@ class Evidencia {
   final String descripcion;
   final String subidaPor;
   final String subidaPorNombre;
+
+  /// Cuándo se subió la foto.
   final DateTime fecha;
+
+  /// Día de la actividad que muestra la foto. El id de la reunión es su
+  /// fecha (aaaa-mm-dd); puede ser anterior al día en que se subió.
+  DateTime get dia => DateTime.tryParse(reunionId) ?? fecha;
 
   factory Evidencia.desde(Doc d) {
     final m = d.data() ?? {};

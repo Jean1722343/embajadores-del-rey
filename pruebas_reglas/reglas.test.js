@@ -262,3 +262,68 @@ test('la caja: cualquier miembro registra a su nombre, nadie edita y solo el lí
   await assertFails(setDoc(doc(db('liderB'), 'capitulos/A/movimientos/m7'), mov('liderB')));
   await assertSucceeds(deleteDoc(doc(db('liderA'), 'capitulos/A/movimientos/m1')));
 });
+
+test('cada quien cambia su nombre y su foto de perfil, no los de otro ni su rol', async () => {
+  const foto = (kb) => Bytes.fromUint8Array(new Uint8Array(kb * 1024));
+  const c = db('consejeroA');
+  await assertSucceeds(updateDoc(doc(c, 'capitulos/A/miembros/consejeroA'), {
+    nombre: 'Pablo', foto: foto(20),
+  }));
+  await assertFails(updateDoc(doc(c, 'capitulos/A/miembros/consejeroA'), { foto: foto(300) }));
+  await assertFails(updateDoc(doc(c, 'capitulos/A/miembros/consejeroA'), { nombre: '' }));
+  await assertFails(updateDoc(doc(c, 'capitulos/A/miembros/consejeroA'), {
+    nombre: 'Pablo', rol: 'lider',
+  }));
+  await assertFails(updateDoc(doc(c, 'capitulos/A/miembros/liderA'), { nombre: 'Otro' }));
+  await assertSucceeds(updateDoc(doc(db('liderA'), 'capitulos/A/miembros/liderA'), {
+    nombre: 'Daniel', foto: foto(20),
+  }));
+});
+
+test('un consejero puede abandonar el capítulo; no puede sacar a otros', async () => {
+  await assertFails(deleteDoc(doc(db('consejeroA'), 'capitulos/A/miembros/liderA')));
+  await assertFails(deleteDoc(doc(db('liderB'), 'capitulos/A/miembros/consejeroA')));
+  await assertSucceeds(deleteDoc(doc(db('consejeroA'), 'capitulos/A/miembros/consejeroA')));
+  await assertFails(getDoc(doc(db('consejeroA'), 'capitulos/A/alumnos/juan')));
+});
+
+test('un consejero sin acceso también puede quitarse del capítulo', async () => {
+  await assertSucceeds(
+    updateDoc(doc(db('liderA'), 'capitulos/A/miembros/consejeroA'), { activo: false }),
+  );
+  await assertSucceeds(deleteDoc(doc(db('consejeroA'), 'capitulos/A/miembros/consejeroA')));
+});
+
+test('solo el líder borra el capítulo entero, con sus miembros y códigos', async () => {
+  await assertFails(deleteDoc(doc(db('consejeroA'), 'capitulos/A')));
+  await assertFails(deleteDoc(doc(db('liderB'), 'capitulos/A')));
+  await assertFails(deleteDoc(doc(db('consejeroA'), 'invitaciones/VIGENT')));
+
+  const d = db('liderA');
+  const codigos = await assertSucceeds(
+    getDocs(query(collection(d, 'invitaciones'), where('capituloId', '==', 'A'))),
+  );
+  for (const c of codigos.docs) await assertSucceeds(deleteDoc(c.ref));
+  await assertSucceeds(deleteDoc(doc(d, 'capitulos/A/alumnos/juan')));
+  await assertSucceeds(deleteDoc(doc(d, 'capitulos/A/miembros/consejeroA')));
+  // La ficha del líder y el capítulo se van juntos, en la misma operación.
+  const lote = writeBatch(d);
+  lote.delete(doc(d, 'capitulos/A/miembros/liderA'));
+  lote.delete(doc(d, 'capitulos/A'));
+  await assertSucceeds(lote.commit());
+
+  // Ya nadie lee ese capítulo, y el otro capítulo sigue intacto.
+  await assertFails(getDoc(doc(db('consejeroA'), 'capitulos/A')));
+  await assertSucceeds(getDoc(doc(db('liderB'), 'capitulos/B')));
+});
+
+test('quien subió una foto puede cambiarle el día de la actividad', async () => {
+  const ev = { reunionId: '2027-01-09', subidaPor: 'consejeroA' };
+  await assertSucceeds(setDoc(doc(db('consejeroA'), 'capitulos/A/evidencias/e1'), ev));
+  await assertSucceeds(
+    updateDoc(doc(db('consejeroA'), 'capitulos/A/evidencias/e1'), { reunionId: '2026-12-05' }),
+  );
+  await assertFails(
+    updateDoc(doc(db('liderA'), 'capitulos/A/evidencias/e1'), { reunionId: '2026-11-01' }),
+  );
+});

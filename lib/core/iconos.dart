@@ -5,6 +5,11 @@ import 'package:flutter/widgets.dart';
 
 /// Trazo grueso.
 abstract final class PhosphorIconsBold {
+  static const arrowCircleUp = IconData(
+    0xe030,
+    fontFamily: 'PhosphorBold',
+    matchTextDirection: true,
+  );
   static const arrowCounterClockwise = IconData(
     0xe038,
     fontFamily: 'PhosphorBold',
@@ -40,6 +45,11 @@ abstract final class PhosphorIconsBold {
     fontFamily: 'PhosphorBold',
     matchTextDirection: true,
   );
+  static const at = IconData(
+    0xe0ac,
+    fontFamily: 'PhosphorBold',
+    matchTextDirection: true,
+  );
   static const bookOpenText = IconData(
     0xe8f2,
     fontFamily: 'PhosphorBold',
@@ -52,6 +62,11 @@ abstract final class PhosphorIconsBold {
   );
   static const buildings = IconData(
     0xe102,
+    fontFamily: 'PhosphorBold',
+    matchTextDirection: true,
+  );
+  static const cake = IconData(
+    0xe780,
     fontFamily: 'PhosphorBold',
     matchTextDirection: true,
   );
@@ -112,6 +127,11 @@ abstract final class PhosphorIconsBold {
   );
   static const cloudSlash = IconData(
     0xe1b6,
+    fontFamily: 'PhosphorBold',
+    matchTextDirection: true,
+  );
+  static const doorOpen = IconData(
+    0xe7e6,
     fontFamily: 'PhosphorBold',
     matchTextDirection: true,
   );
@@ -349,6 +369,11 @@ abstract final class PhosphorIconsBold {
 
 /// Relleno, para lo seleccionado y los sellos.
 abstract final class PhosphorIconsFill {
+  static const cake = IconData(
+    0xe780,
+    fontFamily: 'PhosphorFill',
+    matchTextDirection: true,
+  );
   static const chartBar = IconData(
     0xe150,
     fontFamily: 'PhosphorFill',

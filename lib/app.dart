@@ -8,6 +8,7 @@ import 'features/acceso.dart';
 import 'features/principal.dart';
 import 'features/sin_capitulo.dart';
 import 'features/tutorial.dart';
+import 'services/avisos.dart';
 import 'services/proveedores.dart';
 import 'widgets/comunes.dart';
 import 'widgets/movimiento.dart';
@@ -44,6 +45,10 @@ class _PuertaState extends ConsumerState<Puerta> {
   bool _introTerminada = false;
   bool _tutorialVisto = Preferencias.tutorialVisto;
 
+  /// Si puede haber avisos de cumpleaños programados en este teléfono. Se
+  /// supone que sí al abrir la app: pudieron quedar de una sesión anterior.
+  bool _conAvisos = true;
+
   /// Pantalla que corresponde, o null mientras todavía se está cargando.
   Widget? _destino() {
     final sesion = ref.watch(sesionProvider);
@@ -79,7 +84,19 @@ class _PuertaState extends ConsumerState<Puerta> {
 
   @override
   Widget build(BuildContext context) {
+    // Al cerrar sesión se quitan los avisos de cumpleaños de este teléfono.
+    ref.listen(sesionProvider, (_, sesion) {
+      if (sesion.hasValue && sesion.value == null) Avisos.cancelar();
+    });
     final destino = _introTerminada ? _destino() : null;
+    // Y también al quedarse sin capítulo (lo abandonó, se lo quitaron o se
+    // borró): los cumpleaños de esos muchachos ya no le corresponden.
+    if (destino is PantallaPrincipal) {
+      _conAvisos = true;
+    } else if (destino != null && _conAvisos) {
+      _conAvisos = false;
+      Avisos.cancelar();
+    }
     // Si se llama a _destino solo tras la intro, los proveedores no se
     // escucharían antes; se leen siempre para que carguen durante la intro.
     if (!_introTerminada) _destino();

@@ -79,7 +79,8 @@ service cloud.firestore {
           && request.resource.data.get('suspendido', false) == resource.data.get('suspendido', false))
         || (esSuperAdmin()
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['suspendido']));
-      allow delete: if false;
+      // El líder puede borrar su capítulo entero.
+      allow delete: if esLider(capId);
 
       match /miembros/{uid} {
         allow read: if esMiembro(capId) || (autenticado() && request.auth.uid == uid);
@@ -102,11 +103,20 @@ service cloud.firestore {
             && capituloActivo(capId))
         );
 
-        // El líder cambia rol o da de baja; cada quien solo puede corregir su nombre.
+        // El líder cambia rol o da de baja; cada quien solo puede corregir
+        // su nombre y su foto de perfil (pequeña).
         allow update: if esLider(capId)
           || (esMiembro(capId) && request.auth.uid == uid
-              && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nombre', 'fotoUrl']));
-        allow delete: if esLider(capId);
+              && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nombre', 'foto'])
+              && request.resource.data.nombre is string
+              && request.resource.data.nombre.size() > 0
+              && request.resource.data.nombre.size() <= 80
+              && (!('foto' in request.resource.data)
+                  || (request.resource.data.foto is bytes
+                      && request.resource.data.foto.size() < 200 * 1024)));
+        // El líder quita a cualquiera; un consejero puede salirse por su cuenta.
+        allow delete: if esLider(capId)
+          || (autenticado() && request.auth.uid == uid && resource.data.rol == 'consejero');
       }
 
       // Consejeros y líder administran por igual; borrar es solo del líder.

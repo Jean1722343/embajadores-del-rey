@@ -25,7 +25,9 @@ Esta app nació para resolver eso en mi capítulo, y está hecha para que cualqu
 | **Avance de grado** | Asistencia, tiempo en el grado y las cinco metas, con los requisitos del manual para marcar uno por uno. La meta se firma cuando están completos. |
 | **Muchachos** | Datos de cada uno: grado, fecha de nacimiento, papás o tutores con teléfono, domicilio, notas y foto. Llamada, WhatsApp y mapa desde su perfil. |
 | **Caja** | Saldo del capítulo: ofrendas de las listas, entradas (con cómo se consiguió) y salidas (con para qué). Reporte en PDF y Excel. |
-| **Fotos** | Evidencias de cada reunión, tomadas desde la app. |
+| **Fotos** | Evidencias de cada reunión, tomadas desde la app. Las de actividades pasadas se guardan con su fecha. |
+| **Cumpleaños** | El teléfono de cada consejero avisa el día que un muchacho cumple años, y el inicio muestra los de las próximas dos semanas. |
+| **Mi perfil** | Cada consejero pone su nombre y su foto, que ve el resto del equipo. |
 | **Reportes** | Porcentaje por muchacho y por grupo, alerta de faltas seguidas, PDF y Excel. |
 | **Biblioteca** | Lo esencial de la Orden y los requisitos de los nueve grados dentro de la app; cuadernillos y manual como descargas opcionales desde su enlace oficial. |
 | **Tutorial** | La primera vez, tres pasos en los que se practica con la app. |
@@ -47,8 +49,8 @@ Ejemplo del reporte de caja: [docs/reporte_caja_ejemplo.pdf](docs/reporte_caja_e
 
 ## Quién puede hacer qué
 
-- **Líder.** Crea el capítulo. Además de todo lo que hace un consejero, es el único que puede borrar (muchachos, grupos, periodos, movimientos de caja), quitar accesos, nombrar a otro líder y usar *Empezar de nuevo*, que deja el capítulo en blanco.
-- **Consejero.** Entra con un código de invitación. Pasa lista de cualquier grupo, da de alta muchachos, arma periodos y grupos, firma metas, registra entradas y salidas de caja e invita a otros consejeros.
+- **Líder.** Crea el capítulo. Además de todo lo que hace un consejero, es el único que puede borrar (muchachos, grupos, periodos, movimientos de caja), quitar accesos, nombrar a otro líder, usar *Empezar de nuevo*, que deja el capítulo en blanco, y borrar el capítulo entero.
+- **Consejero.** Entra con un código de invitación. Pasa lista de cualquier grupo, da de alta muchachos, arma periodos y grupos, firma metas, registra entradas y salidas de caja e invita a otros consejeros. Puede abandonar el capítulo cuando quiera.
 
 Estas reglas no dependen de la app: están en `firestore.rules` y el servidor las hace cumplir.
 
@@ -58,6 +60,8 @@ Estas reglas no dependen de la app: están en `firestore.rules` y el servidor la
 - **Firebase**: Auth (correo y Google) y Cloud Firestore con caché local. No usa Cloud Functions ni Storage, así que corre completa en el plan gratuito.
 - **Fotos dentro de Firestore.** Se reducen en el teléfono (`lib/services/fotos.dart`); la miniatura va en el documento de la galería y la foto grande en otro que solo se lee al abrirla.
 - **Sin señal.** Los cambios se guardan en el teléfono y suben solos al volver la conexión.
+- **Avisos de cumpleaños sin servidor.** Cada teléfono programa sus propias notificaciones con la lista de muchachos que ya tiene sincronizada (`lib/services/avisos.dart`).
+- **Actualizaciones.** Al abrir, la app consulta la última versión publicada en este repositorio (*Releases*) y, si hay una más nueva, ofrece descargar el APK (`lib/services/actualizacion.dart`).
 - **Diseño.** Blanco, azul marino y oro, en colores planos; la franja diagonal del escudo es el motivo de los encabezados. Tipografías Bricolage Grotesque y Figtree, e iconos [Phosphor](https://phosphoricons.com/), incluidos en la app.
 
 ```
@@ -99,7 +103,7 @@ Necesitas Flutter 3.50 o más reciente, Node y una cuenta de Firebase.
 ## Pruebas
 
 ```
-flutter test                      # asistencia, avance, caja, manual y PDF
+flutter test                      # asistencia, avance, caja, cumpleaños, versiones, manual y PDF
 cd pruebas_reglas && npm install && npm test   # reglas de seguridad
 ```
 

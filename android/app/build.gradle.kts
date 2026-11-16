@@ -9,10 +9,13 @@ plugins {
 
 android {
     namespace = "com.embajadoresapp.embajadores"
-    compileSdk = flutter.compileSdkVersion
+    // El paquete de notificaciones pide compilar contra Android 37 o más.
+    compileSdk = maxOf(flutter.compileSdkVersion, 37)
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
+        // Lo pide el paquete de notificaciones para programar avisos.
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
@@ -49,4 +52,8 @@ kotlin {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }

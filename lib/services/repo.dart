@@ -20,10 +20,14 @@ class Perfil {
     required this.capitulos,
     required this.capituloActual,
     required this.superAdmin,
+    this.foto,
   });
 
   final String uid;
   final String nombre;
+
+  /// Foto de perfil pequeña del usuario.
+  final Uint8List? foto;
   final List<String> capitulos;
   final String? capituloActual;
   final bool superAdmin;
@@ -36,6 +40,7 @@ class Perfil {
       capitulos: List<String>.from(m['capitulos'] as List? ?? const []),
       capituloActual: m['capituloActual'],
       superAdmin: m['superAdmin'] == true,
+      foto: m['foto'] is Blob ? (m['foto'] as Blob).bytes : null,
     );
   }
 }
@@ -119,6 +124,55 @@ class Repo {
 
   Future<void> cambiarCapitulo(String capId) =>
       _usuario.update({'capituloActual': capId});
+
+  /// Correo con el que entró el usuario.
+  String get miCorreo => _auth.currentUser?.email ?? '';
+
+  /// Cambia el nombre y, si se da, la foto del usuario. Se copia a su ficha
+  /// en cada capítulo para que el resto del equipo lo vea. No espera al
+  /// servidor: sin señal queda en cola y se sincroniza después.
+  void guardarMiPerfil({
+    required String nombre,
+    Uint8List? foto,
+    required List<String> capitulos,
+  }) {
+    final datos = <String, dynamic>{
+      'nombre': nombre.trim(),
+      if (foto != null) 'foto': Blob(foto),
+    };
+    _usuario.set(datos, SetOptions(merge: true)).ignore();
+    _auth.currentUser?.updateDisplayName(nombre.trim()).ignore();
+    for (final capId in capitulos) {
+      // Un capítulo suspendido o del que ya no es miembro rechaza el cambio;
+      // no debe impedir que se guarde en los demás.
+      _sub(capId, 'miembros').doc(uid).update(datos).ignore();
+    }
+  }
+
+  /// Quita un capítulo de la lista del usuario, sin tocar el capítulo.
+  Future<void> olvidarCapitulo(String capId) => _usuario.update({
+    'capitulos': FieldValue.arrayRemove([capId]),
+    'capituloActual': FieldValue.delete(),
+  });
+
+  /// El usuario deja de ser miembro de un capítulo.
+  Future<void> abandonarCapitulo(String capId) async {
+    await _exigirConexion();
+    await _sub(capId, 'miembros').doc(uid).delete();
+    await olvidarCapitulo(capId);
+  }
+
+  /// Salir de un capítulo o borrarlo no debe quedarse en cola sin señal y
+  /// ocurrir más tarde por sorpresa: se comprueba antes que hay servidor.
+  Future<void> _exigirConexion() async {
+    try {
+      await _usuario
+          .get(const GetOptions(source: Source.server))
+          .timeout(const Duration(seconds: 10));
+    } catch (_) {
+      throw const ErrorDeUso('Necesitas conexión a internet para hacer esto.');
+    }
+  }
 
   // ---------- Capítulos y acceso ----------
 
@@ -498,6 +552,10 @@ class Repo {
     return b is Blob ? b.bytes : null;
   }
 
+  /// Cambia el día de la actividad de una foto ya subida.
+  Future<void> cambiarDiaEvidencia(String capId, String id, DateTime dia) =>
+      _sub(capId, 'evidencias').doc(id).update({'reunionId': idDeFecha(dia)});
+
   Future<void> borrarEvidencia(String capId, Evidencia e) =>
       (_db.batch()
             ..delete(_sub(capId, 'evidencias').doc(e.id))
@@ -548,6 +606,50 @@ class Repo {
   /// listas, reuniones, fotos, caja, grupos y periodos). Conserva el capítulo y
   /// sus miembros. Solo lo permite la regla al líder.
   Future<void> reiniciarCapitulo(String capId) async {
+    await _borrarEnLotes(await _contenido(capId));
+  }
+
+  /// Borra el capítulo completo: su contenido, sus códigos de invitación,
+  /// sus miembros y el capítulo mismo. Solo lo permite la regla al líder.
+  Future<void> borrarCapitulo(String capId) async {
+    await _exigirConexion();
+    final refs = await _contenido(capId);
+    final codigos = await _db
+        .collection('invitaciones')
+        .where('capituloId', isEqualTo: capId)
+        .get();
+    refs.addAll(codigos.docs.map((d) => d.reference));
+    final miembros = await _sub(capId, 'miembros').get();
+    refs.addAll(
+      miembros.docs.where((d) => d.id != uid).map((d) => d.reference),
+    );
+    await _borrarEnLotes(refs);
+    // Al final y juntos: la ficha del líder y el capítulo. La regla revisa
+    // el permiso con lo que había antes del lote, cuando aún era líder.
+    await (_db.batch()
+          ..delete(_sub(capId, 'miembros').doc(uid))
+          ..delete(_cap(capId)))
+        .commit();
+    await olvidarCapitulo(capId);
+  }
+
+  Future<void> _borrarEnLotes(
+    List<DocumentReference<Map<String, dynamic>>> refs,
+  ) async {
+    // Firestore admite hasta 500 operaciones por lote.
+    for (var i = 0; i < refs.length; i += 400) {
+      final lote = _db.batch();
+      for (final r in refs.skip(i).take(400)) {
+        lote.delete(r);
+      }
+      await lote.commit();
+    }
+  }
+
+  /// Referencias a todo el contenido de un capítulo (sin sus miembros).
+  Future<List<DocumentReference<Map<String, dynamic>>>> _contenido(
+    String capId,
+  ) async {
     final refs = <DocumentReference<Map<String, dynamic>>>[];
     final alumnos = await _sub(capId, 'alumnos').get();
     for (final a in alumnos.docs) {
@@ -567,14 +669,7 @@ class Repo {
       final docs = await _sub(capId, nombre).get();
       refs.addAll(docs.docs.map((d) => d.reference));
     }
-    // Firestore admite hasta 500 operaciones por lote.
-    for (var i = 0; i < refs.length; i += 400) {
-      final lote = _db.batch();
-      for (final r in refs.skip(i).take(400)) {
-        lote.delete(r);
-      }
-      await lote.commit();
-    }
+    return refs;
   }
 
   // ---------- Super administrador ----------

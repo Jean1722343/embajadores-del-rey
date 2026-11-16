@@ -1,9 +1,13 @@
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../core/iconos.dart';
 
 import '../core/tema.dart';
+import '../models/modelos.dart';
+import '../services/avisos.dart';
+import '../services/proveedores.dart';
 import '../widgets/movimiento.dart';
 import 'admin.dart';
 import 'alumnos.dart';
@@ -12,14 +16,40 @@ import 'inicio.dart';
 import 'caja.dart';
 
 /// Pantalla con la barra de navegación inferior.
-class PantallaPrincipal extends StatefulWidget {
+class PantallaPrincipal extends ConsumerStatefulWidget {
   const PantallaPrincipal({super.key});
   @override
-  State<PantallaPrincipal> createState() => _PantallaPrincipalState();
+  ConsumerState<PantallaPrincipal> createState() => _PantallaPrincipalState();
 }
 
-class _PantallaPrincipalState extends State<PantallaPrincipal> {
+class _PantallaPrincipalState extends ConsumerState<PantallaPrincipal> {
   int _indice = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    Avisos.pedirPermiso();
+    // Los avisos de cumpleaños se reprograman cada vez que cambia la lista
+    // de muchachos o el capítulo abierto.
+    ref.listenManual<List<Alumno>>(
+      alumnosActivosProvider,
+      (_, activos) => _programarCumples(activos),
+      fireImmediately: true,
+    );
+    ref.listenManual<AsyncValue<Capitulo?>>(
+      capituloProvider,
+      (_, _) => _programarCumples(ref.read(alumnosActivosProvider)),
+    );
+  }
+
+  void _programarCumples(List<Alumno> activos) {
+    // Mientras la lista no ha llegado no se toca lo ya programado.
+    if (!ref.read(alumnosProvider).hasValue) return;
+    Avisos.programarCumples(
+      activos,
+      ref.read(capituloProvider).value?.nombre ?? '',
+    );
+  }
 
   /// Clave global: la pila de pestañas conserva su estado aunque la
   /// animación que la envuelve se reinicie.

@@ -20,6 +20,12 @@ String fechaLarga(DateTime d) {
 
 String fechaCorta(DateTime d) => _fechaCorta.format(d);
 
+/// Como [fechaLarga], pero con el año cuando no es el actual: una foto de
+/// una actividad de hace años no debe confundirse con una de este.
+String fechaLargaConAnio(DateTime d) => d.year == DateTime.now().year
+    ? fechaLarga(d)
+    : '${fechaLarga(d)} de ${d.year}';
+
 final _pesos = NumberFormat.currency(locale: 'es_MX', symbol: r'$');
 final _pesosCerrados = NumberFormat.currency(
   locale: 'es_MX',
@@ -161,6 +167,40 @@ class Vacio extends StatelessWidget {
       ),
     ),
   );
+}
+
+/// Foto de una persona (un consejero, el propio usuario), o sus iniciales.
+class FotoPersona extends StatelessWidget {
+  const FotoPersona(this.nombre, this.foto, {super.key, this.radio = 22});
+
+  final String nombre;
+  final Uint8List? foto;
+  final double radio;
+
+  @override
+  Widget build(BuildContext context) {
+    final iniciales = nombre
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((p) => p.isNotEmpty)
+        .take(2)
+        .map((p) => p[0].toUpperCase())
+        .join();
+    return CircleAvatar(
+      radius: radio,
+      backgroundColor: Colores.nube,
+      foregroundImage: foto == null ? null : MemoryImage(foto!),
+      child: Text(
+        iniciales,
+        style: TextStyle(
+          color: Colores.azul,
+          fontFamily: Fuentes.titulos,
+          fontWeight: FontWeight.w800,
+          fontSize: radio * .72,
+        ),
+      ),
+    );
+  }
 }
 
 /// Foto del muchacho, o sus iniciales si no tiene.
