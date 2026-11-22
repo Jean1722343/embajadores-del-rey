@@ -551,9 +551,20 @@ class Repo {
       ..commit();
   }
 
-  /// La foto en tamaño completo de una evidencia.
-  Future<Uint8List?> fotoDeEvidencia(String capId, String evidenciaId) async {
-    final d = await _sub(capId, 'fotos').doc(evidenciaId).get();
+  /// La foto en tamaño completo de una evidencia. Con [soloGuardada] no se
+  /// espera al servidor: falla enseguida si el teléfono no la tiene.
+  Future<Uint8List?> fotoDeEvidencia(
+    String capId,
+    String evidenciaId, {
+    bool soloGuardada = false,
+  }) async {
+    final d = await _sub(capId, 'fotos')
+        .doc(evidenciaId)
+        .get(
+          GetOptions(
+            source: soloGuardada ? Source.cache : Source.serverAndCache,
+          ),
+        );
     final b = d.data()?['bytes'];
     return b is Blob ? b.bytes : null;
   }

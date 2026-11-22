@@ -1,13 +1,16 @@
-import 'dart:typed_data';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/asistencia.dart';
 import '../core/grados.dart';
 import '../models/modelos.dart';
 import 'repo.dart';
+
+/// Pestaña visible de la barra inferior. Las pestañas siguen vivas aunque
+/// no se vean; con esto saben cuándo se salió de ellas.
+final pestanaActual = ValueNotifier<int>(0);
 
 final repoProvider = Provider<Repo>(
   (ref) => Repo(FirebaseFirestore.instance, FirebaseAuth.instance),

@@ -413,7 +413,8 @@ class _PasoEquipoState extends State<_PasoEquipo> {
         const SizedBox(height: 14),
         const _Dato(
           PhosphorIconsBold.camera,
-          'Toma fotos de los que llegaron y de las actividades.',
+          'Toma fotos de los que llegaron y de las actividades. Con el '
+          'botón de compartir marcas varias y las mandas por WhatsApp.',
         ),
         const _Dato(
           PhosphorIconsBold.wifiSlash,

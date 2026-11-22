@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:material_ui/material_ui.dart';
@@ -12,6 +13,8 @@ import '../services/fotos.dart';
 import '../services/proveedores.dart';
 import '../services/repo.dart';
 import '../widgets/comunes.dart';
+import '../widgets/movimiento.dart';
+import 'compartir_fotos.dart';
 
 /// Pregunta de dónde sacar la foto. La cámara ya la entrega reducida
 /// (lado mayor de 1600 px) para que prepararla sea rápido.
@@ -160,80 +163,296 @@ Future<DateTime?> elegirDiaDeActividad(BuildContext context, DateTime inicial) {
 }
 
 /// Galería de evidencias del capítulo, agrupada por el día de la actividad.
-class PantallaEvidencias extends ConsumerWidget {
+/// Con el botón de compartir (o dejando el dedo sobre una foto) se marcan
+/// varias para mandarlas juntas por WhatsApp u otra app.
+class PantallaEvidencias extends ConsumerStatefulWidget {
   const PantallaEvidencias({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<PantallaEvidencias> createState() => _PantallaEvidenciasState();
+}
+
+class _PantallaEvidenciasState extends ConsumerState<PantallaEvidencias> {
+  bool _eligiendo = false;
+
+  /// Ids de las fotos marcadas.
+  final _elegidas = <String>{};
+
+  @override
+  void initState() {
+    super.initState();
+    pestanaActual.addListener(_salir);
+  }
+
+  @override
+  void dispose() {
+    pestanaActual.removeListener(_salir);
+    super.dispose();
+  }
+
+  /// Deja de seleccionar. También al cambiar de pestaña: si no, el botón
+  /// de atrás quedaría atrapado por una selección que ya no se ve.
+  void _salir() {
+    if (!_eligiendo || !mounted) return;
+    setState(() {
+      _eligiendo = false;
+      _elegidas.clear();
+    });
+  }
+
+  void _alternar(String id) {
+    HapticFeedback.selectionClick();
+    setState(() {
+      _eligiendo = true;
+      if (!_elegidas.remove(id)) _elegidas.add(id);
+    });
+  }
+
+  /// Marca todas las de [fotos], o las desmarca si ya lo estaban todas.
+  void _alternarTodas(List<Evidencia> fotos) {
+    final ids = fotos.map((e) => e.id);
+    HapticFeedback.selectionClick();
+    setState(() {
+      if (_elegidas.containsAll(ids)) {
+        _elegidas.removeAll(ids);
+      } else {
+        _elegidas.addAll(ids);
+      }
+    });
+  }
+
+  Future<void> _compartir(List<Evidencia> todas) async {
+    final fotos = todas.where((e) => _elegidas.contains(e.id));
+    final enviadas = await compartirEvidencias(context, ref, fotos);
+    if (enviadas) _salir();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final evidencias = ref.watch(evidenciasProvider(null));
-    return Scaffold(
-      appBar: AppBar(title: const Text('Fotos y evidencias')),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => agregarEvidencia(
-          context,
-          ref,
-          reunionId: idDeFecha(DateTime.now()),
-        ),
-        icon: const Icon(PhosphorIconsBold.cameraPlus),
-        label: const Text('Agregar foto'),
-      ),
-      body: evidencias.when(
-        loading: () => const Cargando(),
-        error: (e, _) => Vacio(
-          icono: PhosphorIconsBold.cloudSlash,
-          texto: mensajeDeError(e),
-        ),
-        data: (todas) {
-          if (todas.isEmpty) {
-            return const Vacio(
-              icono: PhosphorIconsBold.images,
-              texto:
-                  'Aquí aparecerán las fotos de los que llegaron y de las '
-                  'actividades de cada reunión. También puedes subir fotos '
-                  'de actividades pasadas y ponerles su fecha.',
-            );
-          }
-          // El id de la reunión es su fecha (aaaa-mm-dd).
-          final porReunion = <String, List<Evidencia>>{};
-          for (final e in todas) {
-            (porReunion[e.reunionId] ??= []).add(e);
-          }
-          final dias = porReunion.keys.toList()..sort((a, b) => b.compareTo(a));
-          return ListView(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
-            children: [
-              for (final dia in dias) ...[
-                TituloSeccion(
-                  fechaLargaConAnio(DateTime.tryParse(dia) ?? DateTime.now()),
+    final todas = evidencias.value ?? const <Evidencia>[];
+    // Una foto que otro borró mientras tanto deja de estar marcada.
+    if (evidencias.hasValue) {
+      final vivas = {for (final e in todas) e.id};
+      _elegidas.removeWhere((id) => !vivas.contains(id));
+    }
+    final n = _elegidas.length;
+
+    return PopScope(
+      // Atrás cancela la selección en vez de salir de la app.
+      canPop: !_eligiendo,
+      onPopInvokedWithResult: (salio, _) {
+        if (!salio) _salir();
+      },
+      child: Scaffold(
+        appBar: _eligiendo
+            ? AppBar(
+                leading: IconButton(
+                  tooltip: 'Cancelar la selección',
+                  icon: const Icon(PhosphorIconsBold.x),
+                  onPressed: _salir,
                 ),
-                GridView.count(
-                  crossAxisCount: 3,
-                  mainAxisSpacing: 6,
-                  crossAxisSpacing: 6,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  children: [
-                    for (final e in porReunion[dia]!)
-                      GestureDetector(
-                        onTap: () => abrir(context, _VisorEvidencia(e)),
-                        // La miniatura viaja hasta el visor.
-                        child: Hero(
-                          tag: 'evidencia-${e.id}',
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: _Miniatura(e),
+                title: Text(switch (n) {
+                  0 => 'Toca las fotos',
+                  1 => '1 seleccionada',
+                  _ => '$n seleccionadas',
+                }),
+                actions: [
+                  TextButton(
+                    onPressed: () => _alternarTodas(todas),
+                    child: Text(
+                      n > 0 && n == todas.length ? 'Ninguna' : 'Todas',
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                ],
+              )
+            : AppBar(
+                title: const Text('Fotos y evidencias'),
+                actions: [
+                  if (todas.isNotEmpty)
+                    IconButton(
+                      tooltip: 'Seleccionar fotos para compartir',
+                      icon: const Icon(PhosphorIconsBold.shareNetwork),
+                      onPressed: () => setState(() => _eligiendo = true),
+                    ),
+                  const SizedBox(width: 4),
+                ],
+              ),
+        floatingActionButton: !_eligiendo
+            ? FloatingActionButton.extended(
+                onPressed: () => agregarEvidencia(
+                  context,
+                  ref,
+                  reunionId: idDeFecha(DateTime.now()),
+                ),
+                icon: const Icon(PhosphorIconsBold.cameraPlus),
+                label: const Text('Agregar foto'),
+              )
+            : n == 0
+            ? null
+            : FloatingActionButton.extended(
+                onPressed: () => _compartir(todas),
+                icon: const Icon(PhosphorIconsBold.shareNetwork),
+                label: Text(n == 1 ? 'Compartir 1 foto' : 'Compartir $n fotos'),
+              ),
+        body: evidencias.when(
+          loading: () => const Cargando(),
+          error: (e, _) => Vacio(
+            icono: PhosphorIconsBold.cloudSlash,
+            texto: mensajeDeError(e),
+          ),
+          data: (todas) {
+            if (todas.isEmpty) {
+              return const Vacio(
+                icono: PhosphorIconsBold.images,
+                texto:
+                    'Aquí aparecerán las fotos de los que llegaron y de las '
+                    'actividades de cada reunión. También puedes subir fotos '
+                    'de actividades pasadas y ponerles su fecha.',
+              );
+            }
+            // El id de la reunión es su fecha (aaaa-mm-dd).
+            final porReunion = <String, List<Evidencia>>{};
+            for (final e in todas) {
+              (porReunion[e.reunionId] ??= []).add(e);
+            }
+            final dias = porReunion.keys.toList()
+              ..sort((a, b) => b.compareTo(a));
+            return ListView(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
+              children: [
+                for (final dia in dias) ...[
+                  TituloSeccion(
+                    fechaLargaConAnio(DateTime.tryParse(dia) ?? DateTime.now()),
+                    // Marca de un toque todas las fotos de esa actividad.
+                    accion: !_eligiendo
+                        ? null
+                        : TextButton(
+                            onPressed: () => _alternarTodas(porReunion[dia]!),
+                            child: Text(
+                              _elegidas.containsAll(
+                                    porReunion[dia]!.map((e) => e.id),
+                                  )
+                                  ? 'Quitar'
+                                  : 'Todo el día',
+                            ),
                           ),
+                  ),
+                  GridView.count(
+                    crossAxisCount: 3,
+                    mainAxisSpacing: 6,
+                    crossAxisSpacing: 6,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    children: [
+                      for (final e in porReunion[dia]!)
+                        _Casilla(
+                          evidencia: e,
+                          eligiendo: _eligiendo,
+                          elegida: _elegidas.contains(e.id),
+                          alTocar: () => _eligiendo
+                              ? _alternar(e.id)
+                              : abrir(context, _VisorEvidencia(e)),
+                          alMantener: () => _alternar(e.id),
                         ),
-                      ),
-                  ],
-                ),
+                    ],
+                  ),
+                ],
               ],
-            ],
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }
+}
+
+/// Una foto de la galería. Al seleccionar muestra su marca en la esquina y
+/// la foto elegida se encoge un poco dentro de su casilla.
+class _Casilla extends StatelessWidget {
+  const _Casilla({
+    required this.evidencia,
+    required this.eligiendo,
+    required this.elegida,
+    required this.alTocar,
+    required this.alMantener,
+  });
+
+  final Evidencia evidencia;
+  final bool eligiendo;
+  final bool elegida;
+  final VoidCallback alTocar;
+  final VoidCallback alMantener;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    button: true,
+    selected: eligiendo ? elegida : null,
+    label: [
+      'Foto del ${fechaLargaConAnio(evidencia.dia)}',
+      if (evidencia.descripcion.isNotEmpty) evidencia.descripcion,
+    ].join(', '),
+    child: GestureDetector(
+      onTap: alTocar,
+      onLongPress: alMantener,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          DecoratedBox(
+            decoration: BoxDecoration(
+              color: elegida ? Colores.nube : Colores.blanco,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: AnimatedPadding(
+              duration: sinMovimiento(context)
+                  ? Duration.zero
+                  : const Duration(milliseconds: 140),
+              curve: Curves.easeOut,
+              padding: EdgeInsets.all(elegida ? 9 : 0),
+              // La miniatura viaja hasta el visor.
+              child: Hero(
+                tag: 'evidencia-${evidencia.id}',
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(elegida ? 8 : 12),
+                  child: _Miniatura(evidencia),
+                ),
+              ),
+            ),
+          ),
+          if (eligiendo)
+            Positioned(
+              top: 5,
+              right: 5,
+              child: ExcludeSemantics(
+                child: elegida
+                    ? const DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: Colores.blanco,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          PhosphorIconsFill.checkCircle,
+                          color: Colores.azul,
+                          size: 26,
+                        ),
+                      )
+                    : Container(
+                        width: 24,
+                        height: 24,
+                        margin: const EdgeInsets.all(1),
+                        decoration: BoxDecoration(
+                          color: Colors.black26,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colores.blanco, width: 2),
+                        ),
+                      ),
+              ),
+            ),
+        ],
+      ),
+    ),
+  );
 }
 
 class _Miniatura extends StatelessWidget {
@@ -350,6 +569,11 @@ class _VisorEvidencia extends ConsumerWidget {
         backgroundColor: Colors.black,
         title: Text(fechaCorta(evidencia.dia)),
         actions: [
+          IconButton(
+            tooltip: 'Compartir foto',
+            icon: const Icon(PhosphorIconsBold.shareNetwork),
+            onPressed: () => compartirEvidencias(context, ref, [evidencia]),
+          ),
           // Quien la subió o el líder corrigen la fecha y la descripción.
           if (puedeBorrar)
             IconButton(

@@ -28,6 +28,7 @@ class _PantallaPrincipalState extends ConsumerState<PantallaPrincipal> {
   @override
   void initState() {
     super.initState();
+    pestanaActual.value = 0;
     Avisos.pedirPermiso();
     // Los avisos de cumpleaños se reprograman cada vez que cambia la lista
     // de muchachos o el capítulo abierto.
@@ -89,6 +90,7 @@ class _PantallaPrincipalState extends ConsumerState<PantallaPrincipal> {
         if (i == _indice) return;
         HapticFeedback.selectionClick();
         setState(() => _indice = i);
+        pestanaActual.value = i;
       },
     ),
   );
